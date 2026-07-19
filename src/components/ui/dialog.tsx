@@ -36,14 +36,16 @@ function DialogBackdrop({ className, ...props }: DialogPrimitive.Backdrop.Props)
 
 function DialogPopup({ className, ...props }: DialogPrimitive.Popup.Props) {
   return (
-    <DialogPrimitive.Popup
-      data-slot="dialog-popup"
-      className={cn(
-        "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-popover bg-clip-padding p-6 text-sm text-popover-foreground shadow-lg rounded-xl ring-1 ring-foreground/10 transition duration-150 ease-in-out data-ending-style:opacity-0 data-ending-style:translate-x-[-50%] data-ending-style:translate-y-[-calc(50%-8px)] data-starting-style:opacity-0 data-starting-style:translate-x-[-50%] data-starting-style:translate-y-[-calc(50%+8px)]",
-        className
-      )}
-      {...props}
-    />
+    <DialogPrimitive.Portal>
+      <DialogPrimitive.Popup
+        data-slot="dialog-popup"
+        className={cn(
+          "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-popover bg-clip-padding p-6 text-sm text-popover-foreground shadow-lg rounded-xl ring-1 ring-foreground/10 transition duration-150 ease-in-out data-ending-style:opacity-0 data-ending-style:translate-x-[-50%] data-ending-style:translate-y-[-calc(50%-8px)] data-starting-style:opacity-0 data-starting-style:translate-x-[-50%] data-starting-style:translate-y-[-calc(50%+8px)]",
+          className
+        )}
+        {...props}
+      />
+    </DialogPrimitive.Portal>
   )
 }
 
