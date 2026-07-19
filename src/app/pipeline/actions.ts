@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { logActivityEvent } from "@/lib/timeline/queries";
 
 export const FUNNEL_STAGES = [
   { id: "novo", label: "Novo", color: "bg-slate-100 text-slate-700" },
@@ -129,14 +130,21 @@ export async function moveLeadToStage(leadId: string, newStage: FunnelStageId) {
   if (error) throw error;
 
   // Log de atividade
-  await supabase.from("activity_events").insert({
-    law_firm_id: context.lawFirm.id,
-    entity_type: "lead",
-    entity_id: leadId,
-    actor_id: context.member.id,
-    action: "stage_changed",
-    metadata: { newStage, leadName: lead.name },
-  } as any);
+  try {
+    await logActivityEvent(supabase, {
+      lawFirmId: context.lawFirm.id,
+      actorId: context.member.id,
+      actorName: context.member.name,
+      eventType: "updated",
+      entityType: "lead",
+      entityId: leadId,
+      entityTitle: lead.name,
+      description: `Lead movido para ${newStage}`,
+      metadata: { newStage, leadName: lead.name },
+    });
+  } catch (err) {
+    console.error("[pipeline] falha ao registrar activity_events:", err);
+  }
 
   return { success: true };
 }
