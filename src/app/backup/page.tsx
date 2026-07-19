@@ -76,19 +76,19 @@ export default function BackupPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
           <button onClick={() => setError(null)} className="ml-2 underline">fechar</button>
         </div>
       )}
 
       {downloaded && (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+        <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
           Backup baixado com sucesso!
         </div>
       )}
 
-      <div className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
         <div className="space-y-2">
           <h3 className="text-sm font-semibold">Gerar Backup Completo</h3>
           <p className="text-xs text-muted-foreground">
