@@ -91,8 +91,11 @@ export function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
 
-  // Verificar se existe cookie de sessão do Supabase
-  const hasSession = request.cookies.has("sb-access-token") || request.cookies.has("sb-refresh-token");
+  // O @supabase/ssr grava a sessão em sb-<project-ref>-auth-token.
+  // O valor pode ser dividido em vários cookies, por isso verificamos o prefixo.
+  const hasSession = request.cookies.getAll().some(
+    ({ name }) => name.startsWith("sb-") && name.includes("-auth-token"),
+  );
 
   // Redirecionar para login se tentar acessar rota protegida sem sessão
   if (isProtectedRoute && !hasSession) {
