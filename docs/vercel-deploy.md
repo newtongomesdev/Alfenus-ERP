@@ -19,7 +19,7 @@ O arquivo `vercel.json` já configura o cron de alertas:
   "crons": [
     {
       "path": "/api/cron/alerts",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }
@@ -128,4 +128,3 @@ Sender email: email verificado no Resend
 6. Configurar URLs de autenticação no Supabase.
 7. Configurar webhook do Stripe com a URL final.
 8. Fazer deploy pela integração GitHub da Vercel.
-
