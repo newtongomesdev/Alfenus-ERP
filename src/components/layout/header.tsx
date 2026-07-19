@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -47,7 +48,9 @@ export function Header({ memberName, isAuthenticated }: { memberName: string | n
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>{memberName || "Usuário"}</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{memberName || "Usuário"}</DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem render={<Link href="/configuracoes" />}>
                 <UserRound className="size-4" />
