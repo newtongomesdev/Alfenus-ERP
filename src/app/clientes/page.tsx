@@ -121,7 +121,7 @@ export default async function ClientsPage({
           </CardContent>
         </Card>
 
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={() => {}} basePath={basePath} totalRecords={totalCount} />
+        <Pagination currentPage={page} totalPages={totalPages} basePath={basePath} totalRecords={totalCount} />
       </div>
     </AppShell>
   );

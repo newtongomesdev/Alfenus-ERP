@@ -254,7 +254,6 @@ export default async function NotificationsPage({
         <Pagination
           currentPage={page}
           totalPages={totalPages}
-          onPageChange={() => {}}
           basePath="/notificacoes"
           totalRecords={overview.totalCount}
         />

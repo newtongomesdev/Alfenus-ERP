@@ -133,7 +133,7 @@ export default async function LeadsPage({
           </CardContent>
         </Card>
 
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={() => {}} basePath={basePath} totalRecords={totalCount} />
+        <Pagination currentPage={page} totalPages={totalPages} basePath={basePath} totalRecords={totalCount} />
       </div>
     </AppShell>
   );

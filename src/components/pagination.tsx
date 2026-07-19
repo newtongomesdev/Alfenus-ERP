@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +12,7 @@ interface PaginationProps {
 }
 
 function buildHref(basePath: string, page: number) {
-  const url = new URL(basePath, window.location.origin);
+  const url = new URL(basePath, "http://localhost");
   url.searchParams.set("page", String(page));
   return url.pathname + url.search;
 }
@@ -49,7 +47,6 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
 export function Pagination({
   currentPage,
   totalPages,
-  onPageChange,
   basePath,
   totalRecords,
 }: PaginationProps) {
@@ -69,9 +66,6 @@ export function Pagination({
               <Link href={buildHref(basePath, currentPage - 1)} />
             ) : undefined
           }
-          onClick={() => {
-            if (currentPage > 1) onPageChange?.(currentPage - 1);
-          }}
         >
           <ChevronLeft className="size-4" />
           Anterior
@@ -95,7 +89,6 @@ export function Pagination({
                   <Link href={buildHref(basePath, page)} />
                 ) : undefined
               }
-              onClick={() => onPageChange?.(page)}
               className={cn(page === currentPage && "pointer-events-none")}
             >
               {page}
@@ -112,9 +105,6 @@ export function Pagination({
               <Link href={buildHref(basePath, currentPage + 1)} />
             ) : undefined
           }
-          onClick={() => {
-            if (currentPage < totalPages) onPageChange?.(currentPage + 1);
-          }}
         >
           Próximo
           <ChevronRight className="size-4" />
