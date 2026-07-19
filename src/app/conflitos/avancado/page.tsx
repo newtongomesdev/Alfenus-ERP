@@ -15,7 +15,7 @@ import { enhancedConflictCheck, type ConflictResult } from "../actions";
 
 function ResultSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border bg-white">
+    <div className="rounded-lg border bg-card">
       <div className="flex items-center justify-between border-b px-4 py-2">
         <h3 className="text-sm font-semibold">{title}</h3>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">{count}</span>
@@ -63,14 +63,14 @@ export default function ConflitosAvancadoPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
           <button onClick={() => setError(null)} className="ml-2 underline">fechar</button>
         </div>
       )}
 
       {/* Busca */}
-      <div className="mb-4 rounded-lg border bg-white p-4">
+      <div className="mb-4 rounded-lg border bg-card p-4">
         <div className="flex gap-3">
           <div className="flex-1">
             <Label htmlFor="search" className="text-xs">Nome, documento, e-mail, OAB, telefone ou interesse</Label>
