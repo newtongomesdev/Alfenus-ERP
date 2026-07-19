@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type PowerOfAttorney = {
@@ -41,8 +41,7 @@ const powerSchema = z.object({
 
 // Listar procurações
 export async function getPowersOfAttorney(filters?: { caseId?: string; status?: string }): Promise<PowerOfAttorney[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -92,8 +91,7 @@ export async function getPowersOfAttorney(filters?: { caseId?: string; status?: 
 
 // Criar procuração
 export async function createPowerOfAttorney(data: z.infer<typeof powerSchema>) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.criar")) throw new Error("Sem permissão");
 
   const parsed = powerSchema.parse(data);
@@ -129,8 +127,7 @@ export async function createPowerOfAttorney(data: z.infer<typeof powerSchema>) {
 
 // Atualizar status da procuração
 export async function updatePowerOfAttorneyStatus(id: string, status: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -157,8 +154,7 @@ export async function updatePowerOfAttorneyStatus(id: string, status: string) {
 
 // Excluir procuração
 export async function deletePowerOfAttorney(id: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();

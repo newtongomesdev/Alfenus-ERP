@@ -1,14 +1,13 @@
 "use server";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { ExportResult } from "@/lib/export/csv";
 
 // Exportar clientes
 export async function exportClients(): Promise<ExportResult> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "clientes.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -33,8 +32,7 @@ export async function exportClients(): Promise<ExportResult> {
 
 // Exportar leads
 export async function exportLeads(): Promise<ExportResult> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "leads.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -59,8 +57,7 @@ export async function exportLeads(): Promise<ExportResult> {
 
 // Exportar processos
 export async function exportCases(): Promise<ExportResult> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -86,8 +83,7 @@ export async function exportCases(): Promise<ExportResult> {
 
 // Exportar pagamentos
 export async function exportPayments(): Promise<ExportResult> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "financeiro.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();

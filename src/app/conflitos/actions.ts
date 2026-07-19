@@ -1,7 +1,7 @@
 "use server";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ConflictClient = { id: string; name: string; document: string | null; email: string | null; phone: string | null; status: string };
@@ -21,8 +21,7 @@ export type ConflictResult = {
 };
 
 export async function enhancedConflictCheck(term: string): Promise<ConflictResult> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
 
   const query = term.trim().replace(/[^\p{L}\p{N}\s@.-]/gu, "").slice(0, 80);

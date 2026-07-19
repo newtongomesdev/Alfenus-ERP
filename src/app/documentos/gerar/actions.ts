@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivityEvent } from "@/lib/timeline/queries";
 
@@ -18,8 +18,7 @@ export type GeneratedDocument = {
 
 // Buscar templates disponíveis para geração
 export async function getTemplatesForGeneration() {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -50,8 +49,7 @@ export async function getTemplatesForGeneration() {
 
 // Buscar entidade para preenchimento automático
 export async function getEntityData(entityType: string, entityId: string): Promise<Record<string, string>> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
 
   const supabase = await getSupabaseServerClient();
   if (!supabase) throw new Error("Erro ao conectar");
@@ -125,8 +123,7 @@ const generateSchema = z.object({
 });
 
 export async function generateDocument(data: z.infer<typeof generateSchema>): Promise<GeneratedDocument> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.criar")) throw new Error("Sem permissão");
 
   const parsed = generateSchema.parse(data);

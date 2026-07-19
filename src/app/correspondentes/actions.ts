@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type Correspondent = {
@@ -33,8 +33,7 @@ const correspondentSchema = z.object({
 
 // Listar correspondentes
 export async function getCorrespondents(filters?: { status?: string; search?: string }): Promise<Correspondent[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "clientes.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -74,8 +73,7 @@ export async function getCorrespondents(filters?: { status?: string; search?: st
 
 // Criar correspondente
 export async function createCorrespondent(data: z.infer<typeof correspondentSchema>) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "clientes.criar")) throw new Error("Sem permissão");
 
   const parsed = correspondentSchema.parse(data);
@@ -101,8 +99,7 @@ export async function createCorrespondent(data: z.infer<typeof correspondentSche
 
 // Atualizar correspondente
 export async function updateCorrespondent(id: string, data: Partial<z.infer<typeof correspondentSchema>> & { status?: string }) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "clientes.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -131,8 +128,7 @@ export async function updateCorrespondent(id: string, data: Partial<z.infer<type
 
 // Excluir correspondente
 export async function deleteCorrespondent(id: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "clientes.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();

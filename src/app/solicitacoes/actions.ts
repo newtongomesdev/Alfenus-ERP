@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivityEvent } from "@/lib/timeline/queries";
 
@@ -42,8 +42,7 @@ const updateStatusSchema = z.object({
 
 // Listar solicitações
 export async function getDocumentRequests(filters?: { status?: string; clientId?: string }): Promise<DocumentRequest[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -136,8 +135,7 @@ export async function getDocumentRequests(filters?: { status?: string; clientId?
 
 // Criar solicitação
 export async function createDocumentRequest(data: z.infer<typeof createRequestSchema>) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.criar")) throw new Error("Sem permissão");
 
   const parsed = createRequestSchema.parse(data);
@@ -187,8 +185,7 @@ export async function createDocumentRequest(data: z.infer<typeof createRequestSc
 
 // Atualizar status
 export async function updateDocumentRequestStatus(requestId: string, status: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   updateStatusSchema.parse({ requestId, status });
@@ -233,8 +230,7 @@ export async function updateDocumentRequestStatus(requestId: string, status: str
 
 // Excluir solicitação
 export async function deleteDocumentRequest(requestId: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();

@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ChecklistItem = {
@@ -34,8 +34,7 @@ const toggleItemSchema = z.object({
 
 // Buscar checklist de um processo
 export async function getProcessChecklist(processId: string): Promise<ChecklistItem[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -58,8 +57,7 @@ export async function getProcessChecklist(processId: string): Promise<ChecklistI
 
 // Adicionar item ao checklist
 export async function addChecklistItem(processId: string, title: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   addItemSchema.parse({ processId, title });
@@ -96,8 +94,7 @@ export async function addChecklistItem(processId: string, title: string) {
 
 // Toggle (marcar/desmarcar) item
 export async function toggleChecklistItem(processId: string, itemId: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   toggleItemSchema.parse({ processId, itemId });
@@ -131,8 +128,7 @@ export async function toggleChecklistItem(processId: string, itemId: string) {
 
 // Remover item do checklist
 export async function removeChecklistItem(processId: string, itemId: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -162,8 +158,7 @@ export async function removeChecklistItem(processId: string, itemId: string) {
 
 // Listar templates de checklist
 export async function getChecklistTemplates(): Promise<ChecklistTemplate[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -188,8 +183,7 @@ export async function getChecklistTemplates(): Promise<ChecklistTemplate[]> {
 
 // Aplicar template ao checklist do processo
 export async function applyChecklistTemplate(processId: string, templateId: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -236,8 +230,7 @@ export async function applyChecklistTemplate(processId: string, templateId: stri
 
 // Criar template de checklist
 export async function createChecklistTemplate(data: { name: string; description?: string; category: string; items: Array<{ title: string; required?: boolean }> }) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "processos.criar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();

@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type CustomField = {
@@ -35,8 +35,7 @@ const fieldSchema = z.object({
 
 // Listar campos personalizados
 export async function getCustomFields(entityType: string): Promise<CustomField[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "configuracoes.administrar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -64,8 +63,7 @@ export async function getCustomFields(entityType: string): Promise<CustomField[]
 
 // Criar campo personalizado
 export async function createCustomField(data: z.infer<typeof fieldSchema>) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "configuracoes.administrar")) throw new Error("Sem permissão");
 
   const parsed = fieldSchema.parse(data);
@@ -89,8 +87,7 @@ export async function createCustomField(data: z.infer<typeof fieldSchema>) {
 
 // Excluir campo personalizado
 export async function deleteCustomField(id: string) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "configuracoes.administrar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
@@ -108,8 +105,7 @@ export async function deleteCustomField(id: string) {
 
 // Buscar valores de campos personalizados para uma entidade
 export async function getCustomFieldValues(entityType: string, entityId: string): Promise<CustomFieldValue[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
 
   const supabase = await getSupabaseServerClient();
   if (!supabase) throw new Error("Erro ao conectar");
@@ -134,8 +130,7 @@ export async function getCustomFieldValues(entityType: string, entityId: string)
 
 // Salvar valores de campos personalizados
 export async function saveCustomFieldValues(entityType: string, entityId: string, values: Record<string, string | null>) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "clientes.editar") && !can(context.member.role, "processos.editar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();

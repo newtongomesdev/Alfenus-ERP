@@ -1,7 +1,7 @@
 "use server";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type BackupData = {
@@ -24,8 +24,7 @@ export type BackupData = {
 
 // Exportar backup completo do tenant
 export async function generateBackup(): Promise<BackupData> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "configuracoes.administrar")) throw new Error("Somente administradores podem gerar backup");
 
   const supabase = await getSupabaseServerClient();

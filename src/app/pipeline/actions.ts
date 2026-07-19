@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { FUNNEL_STAGES, PROBABILITY_MAP, type FunnelStageId } from "@/lib/pipeline/pipeline-utils";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivityEvent } from "@/lib/timeline/queries";
@@ -34,8 +34,7 @@ const moveLeadSchema = z.object({
 });
 
 export async function getPipelineData(): Promise<PipelineColumn[]> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "leads.pipeline")) throw new Error("Sem permissão para acessar o pipeline");
 
   const supabase = await getSupabaseServerClient();
@@ -94,8 +93,7 @@ export async function getPipelineData(): Promise<PipelineColumn[]> {
 }
 
 export async function moveLeadToStage(leadId: string, newStage: FunnelStageId) {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "leads.editar")) throw new Error("Sem permissão para mover leads");
 
   moveLeadSchema.parse({ leadId, newStage });

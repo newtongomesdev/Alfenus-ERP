@@ -1,7 +1,7 @@
 "use server";
 
-import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { requireAppContext } from "@/lib/auth/require-app-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AuditLogEntry = {
@@ -27,8 +27,7 @@ export type AuditFilters = {
 
 // Listar logs de auditoria do tenant
 export async function getAuditLogs(filters: AuditFilters = {}, page = 1, pageSize = 50): Promise<{ items: AuditLogEntry[]; total: number }> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "configuracoes.administrar")) throw new Error("Somente administradores podem ver auditoria");
 
   const supabase = await getSupabaseServerClient();
@@ -86,8 +85,7 @@ export async function getAuditStats(): Promise<{
   topActions: { action: string; count: number }[];
   topEntities: { entity: string; count: number }[];
 }> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Não autenticado");
+  const context = await requireAppContext();
   if (!can(context.member.role, "configuracoes.administrar")) throw new Error("Sem permissão");
 
   const supabase = await getSupabaseServerClient();
