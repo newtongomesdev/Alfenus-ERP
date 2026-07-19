@@ -13,9 +13,10 @@ export async function signUpAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const passwordConfirmation = String(formData.get("passwordConfirmation") ?? "");
   const privacyAccepted = formData.get("privacyAccepted") === "on";
 
-  if (name.length < 2 || !email || password.length < 8 || !privacyAccepted) {
+  if (name.length < 2 || !email || password.length < 8 || password !== passwordConfirmation || !privacyAccepted) {
     redirect("/cadastrar?erro=validacao");
   }
 

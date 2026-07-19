@@ -35,3 +35,31 @@ export async function signInAction(formData: FormData) {
 
   redirect("/dashboard");
 }
+
+export async function sendMagicLinkAction(formData: FormData) {
+  if (!hasSupabaseEnv()) {
+    redirect("/entrar?erro=ambiente");
+  }
+
+  const email = String(formData.get("magicEmail") ?? "").trim();
+  if (!email) {
+    redirect("/entrar?erro=magic_email");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) {
+    redirect("/entrar?erro=ambiente");
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") || "";
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: `${appUrl}/onboarding` },
+  });
+
+  if (error) {
+    redirect("/entrar?erro=magic_link");
+  }
+
+  redirect("/entrar?mensagem=magic_link");
+}

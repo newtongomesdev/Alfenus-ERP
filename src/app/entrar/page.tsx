@@ -1,19 +1,23 @@
 import { ArrowLeft, Scale, ShieldCheck, Landmark } from "lucide-react";
 import Link from "next/link";
 
-import { signInAction } from "@/app/entrar/actions";
+import { sendMagicLinkAction, signInAction } from "@/app/entrar/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/password-input";
 
 const errorMessages: Record<string, string> = {
   ambiente: "Configure as variáveis do Supabase antes de entrar.",
   credenciais: "E-mail ou senha incorretos. Por favor, tente novamente.",
+  magic_email: "Informe seu e-mail para receber o link de acesso.",
+  magic_link: "Não foi possível enviar o link de acesso. Verifique o e-mail e tente novamente.",
 };
 
 const infoMessages: Record<string, string> = {
   confirmacao: "Sua conta foi criada com sucesso! Verifique sua caixa de entrada para confirmar seu e-mail antes de acessar a plataforma.",
+  magic_link: "Enviamos um link de acesso para seu e-mail. Verifique também a pasta de spam.",
 };
 
 export default async function SignInPage({
@@ -126,7 +130,7 @@ export default async function SignInPage({
                     <Label htmlFor="password" className="text-xs font-semibold">Senha</Label>
                     <Link href="/recuperar-senha" className="text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors">Esqueci minha senha</Link>
                   </div>
-                  <Input 
+                  <PasswordInput 
                     id="password" 
                     name="password" 
                     type="password" 
@@ -151,6 +155,20 @@ export default async function SignInPage({
                 <Button className="w-full h-10 mt-2 font-semibold transition active:scale-[0.98]" type="submit">
                   Entrar no Painel
                 </Button>
+              </form>
+
+              <div className="my-6 flex items-center gap-3 text-[10px] text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                <span>ou entre sem senha</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <form action={sendMagicLinkAction} className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="magicEmail" className="text-xs font-semibold">E-mail para receber o link</Label>
+                  <Input id="magicEmail" name="magicEmail" type="email" autoComplete="email" placeholder="exemplo@escritorio.com.br" required className="h-10" />
+                </div>
+                <Button variant="outline" className="h-10 w-full font-semibold" type="submit">Enviar link de acesso</Button>
               </form>
               
               <div className="mt-6 border-t border-border/40 pt-4 text-center">

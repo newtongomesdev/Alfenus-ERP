@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/password-input";
 
 const errorMessages: Record<string, string> = {
   ambiente: "Configure as variáveis do Supabase antes de criar uma conta.",
@@ -111,7 +112,7 @@ export default async function SignUpPage({
               <form action={signUpAction} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-xs font-semibold">Nome completo</Label>
-                  <Input 
+                  <PasswordInput 
                     id="name" 
                     name="name" 
                     autoComplete="name" 
@@ -144,6 +145,17 @@ export default async function SignUpPage({
                     className="h-10 transition duration-200 focus-visible:ring-primary"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">Sua senha deve conter pelo menos 8 caracteres.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="passwordConfirmation" className="text-xs font-semibold">Confirme sua senha</Label>
+                  <PasswordInput
+                    id="passwordConfirmation"
+                    name="passwordConfirmation"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    className="h-10 transition duration-200 focus-visible:ring-primary"
+                  />
                 </div>
                 <label className="flex items-start gap-2 text-xs text-muted-foreground">
                   <input type="checkbox" name="privacyAccepted" required className="mt-0.5 size-4 rounded border-input" />
