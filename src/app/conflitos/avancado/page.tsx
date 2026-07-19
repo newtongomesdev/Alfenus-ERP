@@ -53,13 +53,8 @@ export default function ConflitosAvancadoPage() {
   return (
     <AppShell memberName={null}>
       <PageHeader
-        title="Conflito de Interesse Avançado"
-        description="Busca ampla em clientes, leads, partes, processos e correspondentes"
-        actions={
-          <Link href="/conflitos" className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-2.5 text-sm font-medium transition hover:bg-muted">
-            Busca Básica
-          </Link>
-        }
+        title="Conflito de Interesse"
+        description="Pesquise em clientes, leads, partes, processos e correspondentes antes de aceitar um caso."
       />
 
       {error && (
