@@ -1,0 +1,17 @@
+"use client";
+
+import { createBrowserClient } from "@supabase/ssr";
+
+import { env, hasSupabaseEnv } from "@/lib/env";
+import type { Database } from "@/lib/supabase/types";
+
+export function getSupabaseBrowserClient() {
+  if (!hasSupabaseEnv()) {
+    return null;
+  }
+
+  return createBrowserClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL!,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+}

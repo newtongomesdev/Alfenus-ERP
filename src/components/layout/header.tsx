@@ -1,0 +1,76 @@
+import Link from "next/link";
+import { Bell, LogOut, UserRound } from "lucide-react";
+
+import { signOutAction } from "@/app/actions";
+import { GlobalSearch } from "@/components/layout/global-search";
+import { MobileNav } from "@/components/layout/mobile-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export function Header({ memberName }: { memberName: string | null }) {
+  const initials = memberName
+    ? memberName
+        .split(" ")
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()
+    : "AL";
+
+  return (
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur lg:px-6">
+      <MobileNav />
+      <GlobalSearch />
+      <div className="ml-auto flex items-center gap-2">
+        <Button variant="outline" size="icon" aria-label="Notificações">
+          <Bell className="size-4" />
+        </Button>
+        <ThemeToggle />
+        {memberName ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Abrir menu do usuário" />
+              }
+            >
+              <Avatar className="size-8">
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>{memberName}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/configuracoes" />}>
+                <UserRound className="size-4" />
+                Configurações
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <form action={signOutAction}>
+                <DropdownMenuItem render={<button type="submit" className="w-full" />}>
+                  <LogOut className="size-4" />
+                  Sair
+                </DropdownMenuItem>
+              </form>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link
+            href="/entrar"
+            className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-2.5 text-sm font-medium transition hover:bg-muted"
+          >
+            Entrar
+          </Link>
+        )}
+      </div>
+    </header>
+  );
+}
