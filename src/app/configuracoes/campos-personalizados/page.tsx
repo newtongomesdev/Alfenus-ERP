@@ -45,8 +45,8 @@ function NewFieldForm({ entityType, onSubmit, onClose }: { entityType: string; o
         </div>
         <div>
           <Label>Tipo</Label>
-          <select value={fieldType} onChange={(e) => setFieldType(e.target.value)} className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm">
-            {FIELD_TYPES.map((ft) => <option key={ft.value} value={ft.value}>{ft.label}</option>)}
+          <select value={fieldType} onChange={(e) => setFieldType(e.target.value)} className="h-8 w-full rounded-lg border border-input bg-card px-2.5 text-sm text-foreground dark:[color-scheme:dark]">
+            {FIELD_TYPES.map((ft) => <option className="bg-popover text-popover-foreground" key={ft.value} value={ft.value}>{ft.label}</option>)}
           </select>
         </div>
         {fieldType === "select" && (
