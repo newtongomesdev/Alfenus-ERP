@@ -55,14 +55,29 @@ export async function getPipelineData(): Promise<PipelineColumn[]> {
     .from("leads")
     .select(`
       id, name, email, phone, interest, funnel_stage, probability,
-      estimated_value_cents, next_contact_at, created_at,
-      responsible_member:law_firm_members!leads_responsible_member_id_fkey(name)
+      estimated_value_cents, next_contact_at, created_at, responsible_member_id
     `)
     .eq("law_firm_id", context.lawFirm.id)
     .in("status", ["novo", "em_atendimento", "qualificado"])
     .order("created_at", { ascending: false });
 
   if (error) throw error;
+
+  const responsibleMemberIds = [...new Set((leads ?? []).map((lead) => lead.responsible_member_id).filter(Boolean))] as string[];
+  const responsibleNames = new Map<string, string>();
+
+  if (responsibleMemberIds.length > 0) {
+    const { data: members, error: membersError } = await supabase
+      .from("law_firm_members")
+      .select("id, name")
+      .in("id", responsibleMemberIds)
+      .eq("law_firm_id", context.lawFirm.id);
+
+    if (membersError) throw membersError;
+    for (const member of members ?? []) {
+      responsibleNames.set(member.id, member.name);
+    }
+  }
 
   const mapped: PipelineLead[] = (leads ?? []).map((l: any) => ({
     id: l.id,
@@ -74,7 +89,7 @@ export async function getPipelineData(): Promise<PipelineColumn[]> {
     probability: l.probability,
     estimatedValueCents: l.estimated_value_cents,
     nextContactAt: l.next_contact_at,
-    responsibleName: l.responsible_member?.name ?? null,
+    responsibleName: l.responsible_member_id ? responsibleNames.get(l.responsible_member_id) ?? null : null,
     createdAt: l.created_at,
   }));
 
