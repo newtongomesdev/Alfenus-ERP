@@ -7,9 +7,10 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { formatCurrencyFromCents, formatDate } from "@/lib/formatters";
+import { FUNNEL_STAGES, type FunnelStageId } from "@/lib/pipeline/pipeline-utils";
 
 import { getErrorMessage } from "@/lib/utils";
-import { type PipelineColumn, type FunnelStageId, getPipelineData, moveLeadToStage, FUNNEL_STAGES } from "./actions";
+import { type PipelineColumn, getPipelineData, moveLeadToStage } from "./actions";
 
 function LeadCard({ lead }: { lead: PipelineColumn["leads"][number] }) {
   return (

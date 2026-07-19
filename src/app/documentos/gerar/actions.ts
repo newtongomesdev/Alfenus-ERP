@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { extractPlaceholders, renderTemplate, validateTemplate } from "@/lib/documents/template-engine";
+import { logActivityEvent } from "@/lib/timeline/queries";
 
 export type GeneratedDocument = {
   id: string;
@@ -152,15 +152,21 @@ export async function generateDocument(data: z.infer<typeof generateSchema>): Pr
 
   if (error) throw error;
 
-  // Log de atividade
-  await supabase.from("activity_events").insert({
-    law_firm_id: context.lawFirm.id,
-    entity_type: parsed.entityType ?? "documento_gerado",
-    entity_id: parsed.entityId ?? doc.id,
-    actor_id: context.member.id,
-    action: "document_generated",
-    metadata: { documentName: parsed.name, templateId: parsed.templateId },
-  } as any);
+  try {
+    await logActivityEvent(supabase, {
+      lawFirmId: context.lawFirm.id,
+      actorId: context.member.id,
+      actorName: context.member.name,
+      eventType: "document_generated",
+      entityType: parsed.entityType ?? "documento_gerado",
+      entityId: parsed.entityId ?? doc.id,
+      entityTitle: parsed.name,
+      description: "Documento gerado a partir de template",
+      metadata: { documentName: parsed.name, templateId: parsed.templateId },
+    });
+  } catch (err) {
+    console.error("[documentos/gerar] falha ao registrar activity_events:", err);
+  }
 
   return {
     id: doc.id,
