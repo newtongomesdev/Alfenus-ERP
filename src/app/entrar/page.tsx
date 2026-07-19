@@ -28,55 +28,55 @@ export default async function SignInPage({
   return (
     <main className="min-h-screen grid lg:grid-cols-2 bg-background">
       {/* Left side: Premium Branding Panel */}
-      <section className="hidden lg:flex relative flex-col justify-between p-12 bg-gradient-to-br from-primary via-primary/95 to-slate-950 text-primary-foreground overflow-hidden">
+      <section className="hidden lg:flex relative flex-col justify-between p-12 bg-gradient-to-br from-slate-50 via-white to-slate-200 text-slate-900 overflow-hidden">
         {/* Glow decorative element */}
-        <div className="absolute -bottom-20 -left-20 w-96 h-96 rounded-full bg-primary-foreground/5 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-96 h-96 rounded-full bg-slate-300/40 blur-3xl" />
         
         {/* Top Header/Brand */}
         <div className="relative z-10 flex items-center gap-2">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md">
-            <Scale className="size-5 text-white" />
+          <div className="flex size-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+            <Scale className="size-5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">Alfenus</span>
+          <span className="text-xl font-bold tracking-tight text-slate-950">Alfenus</span>
         </div>
 
         {/* Center: Pitch & Value proposition */}
         <div className="relative z-10 max-w-lg my-auto space-y-8">
           <div className="space-y-4">
-            <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-950 leading-tight">
               Sua operação jurídica segura e sem atritos.
             </h1>
-            <p className="text-base text-primary-foreground/80 leading-relaxed">
+            <p className="text-base text-slate-700 leading-relaxed">
               Gerencie leads, processos judiciais, prazos críticos e todo o fluxo financeiro do seu escritório em um ambiente isolado de alta performance.
             </p>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-white/10">
+          <div className="space-y-4 pt-4 border-t border-slate-300">
             <div className="flex gap-3.5">
-              <div className="flex size-6 items-center justify-center rounded-md bg-white/10 text-white">
+              <div className="flex size-6 items-center justify-center rounded-md bg-slate-900 text-white">
                 <ShieldCheck className="size-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">Confidencialidade Garantida</p>
-                <p className="mt-1 text-xs text-primary-foreground/70">Isolamento rigoroso de informações, garantindo total privacidade para os dados do seu escritório.</p>
+                <p className="text-sm font-semibold text-slate-900">Confidencialidade Garantida</p>
+                <p className="mt-1 text-xs text-slate-600">Isolamento rigoroso de informações, garantindo total privacidade para os dados do seu escritório.</p>
               </div>
             </div>
 
             <div className="flex gap-3.5">
-              <div className="flex size-6 items-center justify-center rounded-md bg-white/10 text-white">
+              <div className="flex size-6 items-center justify-center rounded-md bg-slate-900 text-white">
                 <Landmark className="size-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">Auditoria e Controle de Permissões</p>
-                <p className="mt-1 text-xs text-primary-foreground/70">Gerencie perfis de acesso detalhados para advogados, sócios e administrativos.</p>
+                <p className="text-sm font-semibold text-slate-900">Auditoria e Controle de Permissões</p>
+                <p className="mt-1 text-xs text-slate-600">Gerencie perfis de acesso detalhados para advogados, sócios e administrativos.</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Bottom: Subtitle/Quote */}
-        <div className="relative z-10 border-t border-white/10 pt-6">
-          <p className="text-xs text-primary-foreground/60 italic leading-relaxed">
+        <div className="relative z-10 border-t border-slate-300 pt-6">
+          <p className="text-xs text-slate-600 italic leading-relaxed">
             &ldquo;A confiança e a transparência em nossa plataforma são garantidas por criptografia de dados e práticas de segurança de padrão bancário.&rdquo;
           </p>
         </div>
