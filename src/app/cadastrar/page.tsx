@@ -112,7 +112,7 @@ export default async function SignUpPage({
               <form action={signUpAction} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-xs font-semibold">Nome completo</Label>
-                  <PasswordInput 
+                  <Input 
                     id="name" 
                     name="name" 
                     autoComplete="name" 
@@ -135,10 +135,9 @@ export default async function SignUpPage({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-xs font-semibold">Senha</Label>
-                  <Input 
+                  <PasswordInput 
                     id="password" 
                     name="password" 
-                    type="password" 
                     autoComplete="new-password" 
                     minLength={8} 
                     required 
