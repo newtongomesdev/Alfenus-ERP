@@ -31,7 +31,7 @@ export function KPICards({ data }: { data?: { pipelineCount?: number; pendingReq
         <Link
           key={card.label}
           href={card.href ?? "#"}
-          className={`rounded-lg border bg-white p-3 transition-shadow hover:shadow-sm border-l-4 ${card.color}`}
+          className={`rounded-lg border bg-card p-3 transition-colors hover:bg-muted/40 hover:shadow-sm border-l-4 ${card.color}`}
         >
           <p className="text-xs text-muted-foreground">{card.label}</p>
           <p className="text-2xl font-bold">{card.value}</p>

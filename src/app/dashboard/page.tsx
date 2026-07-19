@@ -74,7 +74,10 @@ export default async function Home() {
   const overview = await getDashboardOverview();
 
   return (
-    <AppShell memberName={overview.memberName}>
+    <AppShell
+      memberName={overview.memberName}
+      isAuthenticated={overview.status !== "signed-out" && overview.status !== "missing-env"}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Dashboard"

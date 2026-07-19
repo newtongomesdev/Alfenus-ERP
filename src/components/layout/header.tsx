@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Header({ memberName }: { memberName: string | null }) {
+export function Header({ memberName, isAuthenticated }: { memberName: string | null; isAuthenticated?: boolean }) {
   const initials = memberName
     ? memberName
         .split(" ")
@@ -35,7 +35,7 @@ export function Header({ memberName }: { memberName: string | null }) {
           <Bell className="size-4" />
         </Button>
         <ThemeToggle />
-        {memberName ? (
+        {isAuthenticated ?? Boolean(memberName) ? (
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -47,7 +47,7 @@ export function Header({ memberName }: { memberName: string | null }) {
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>{memberName}</DropdownMenuLabel>
+              <DropdownMenuLabel>{memberName || "Usuário"}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem render={<Link href="/configuracoes" />}>
                 <UserRound className="size-4" />
