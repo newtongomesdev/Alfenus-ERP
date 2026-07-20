@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type PortalQueryClient = {
   from(table: "client_portal_invites"): {
@@ -60,7 +61,7 @@ export async function getPublicPortalByToken(token: string) {
 
   const { data: invite, error } = await supabase
     .from("client_portal_invites")
-    .select("id, law_firm_id, client_id, email, status, expires_at, clients(id, name, email), law_firms(name)")
+    .select("id, law_firm_id, client_id, email, status, expires_at, clients(id, name, email), law_firms(name, logo_path)")
     .eq("token", token)
     .eq("status", "ativo")
     .maybeSingle();
@@ -76,7 +77,7 @@ export async function getPublicPortalByToken(token: string) {
     status: string;
     expires_at: string | null;
     clients: { id: string; name: string; email: string | null } | null;
-    law_firms: { name: string } | null;
+    law_firms: { name: string; logo_path: string | null } | null;
   };
 
   if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return null;
@@ -98,9 +99,20 @@ export async function getPublicPortalByToken(token: string) {
   if (documentsResult.error) throw documentsResult.error;
   if (deadlinesResult.error) throw deadlinesResult.error;
 
+  let logoUrl: string | null = null;
+  if (row.law_firms?.logo_path) {
+    const admin = getSupabaseAdminClient();
+    if (admin) {
+      const { data: signedData } = await admin.storage
+        .from("branding")
+        .createSignedUrl(row.law_firms.logo_path, 3600);
+      logoUrl = signedData?.signedUrl ?? null;
+    }
+  }
+
   return {
     client: row.clients,
-    lawFirm: row.law_firms,
+    lawFirm: row.law_firms ? { name: row.law_firms.name, logoUrl } : null,
     cases: casesResult.data ?? [],
     contracts: contractsResult.data ?? [],
     documents: documentsResult.data ?? [],

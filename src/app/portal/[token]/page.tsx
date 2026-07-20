@@ -36,10 +36,19 @@ export default async function PublicClientPortalPage({
       {/* Header Premium */}
       <section className="bg-white border-b sticky top-0 z-10 shadow-sm">
         <div className="mx-auto max-w-6xl px-6 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-primary">{data.lawFirm?.name ?? "Escritório"}</p>
-            <h1 className="mt-1 text-2xl md:text-3xl font-semibold tracking-tight">Portal de {data.client?.name ?? "Cliente"}</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Acompanhe seus processos, contratos e documentos em tempo real.</p>
+          <div className="flex items-center gap-4">
+            {data.lawFirm?.logoUrl && (
+              <img
+                src={data.lawFirm.logoUrl}
+                alt={`Logo ${data.lawFirm.name}`}
+                className="h-12 w-12 rounded-lg object-contain border bg-slate-50 p-1 shrink-0"
+              />
+            )}
+            <div>
+              <p className="text-sm font-medium text-primary">{data.lawFirm?.name ?? "Escritório"}</p>
+              <h1 className="mt-1 text-2xl md:text-3xl font-semibold tracking-tight">Portal de {data.client?.name ?? "Cliente"}</h1>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Acompanhe seus processos, contratos e documentos em tempo real.</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
