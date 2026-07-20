@@ -737,9 +737,9 @@ export default function GerarDocumentoPage() {
               </CardHeader>
 
               <CardContent className="p-6">
-                {/* Textarea editável estilo folha A4 física em tempo real */}
-                <div className="relative rounded-xl border border-muted-foreground/20 bg-slate-200/60 dark:bg-zinc-950 p-4 sm:p-8 flex justify-center shadow-inner">
-                  <div className="w-full max-w-[620px] bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 rounded-lg border border-slate-300 dark:border-zinc-800 shadow-xl flex flex-col font-sans overflow-hidden transition-all">
+                {/* Textarea editável estilo folha A4 física em tempo real com proporções reais */}
+                <div className="relative rounded-xl border border-muted-foreground/20 bg-slate-200/60 dark:bg-zinc-950 p-4 sm:p-6 flex justify-center shadow-inner overflow-x-auto">
+                  <div className="w-[595px] h-[842px] shrink-0 bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 rounded-lg border border-slate-300 dark:border-zinc-800 shadow-xl flex flex-col font-sans overflow-hidden transition-all">
                     
                     {/* Cabeçalho espelhado do PDF */}
                     <div className="p-6 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900/50">
@@ -757,7 +757,7 @@ export default function GerarDocumentoPage() {
                         </div>
                       </div>
                       <div className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20 uppercase tracking-wider">
-                        Canvas A4
+                        A4 PDF
                       </div>
                     </div>
 
@@ -774,12 +774,11 @@ export default function GerarDocumentoPage() {
                     </div>
 
                     {/* Corpo do Documento - Textarea estilizada como papel */}
-                    <div className="px-6 py-4 flex-1">
+                    <div className="px-6 py-4 flex-1 overflow-y-auto">
                       <textarea
                         value={preview ?? ""}
                         onChange={(e) => setPreview(e.target.value)}
-                        rows={22}
-                        className={`w-full min-h-[460px] resize-none border-none bg-transparent p-0 text-[11.5px] leading-relaxed text-slate-800 dark:text-zinc-200 outline-none focus:ring-0 focus:outline-none ${
+                        className={`w-full h-full resize-none border-none bg-transparent p-0 text-[11.5px] leading-relaxed text-slate-800 dark:text-zinc-200 outline-none focus:ring-0 focus:outline-none ${
                           isMono ? "font-mono" : "font-sans"
                         }`}
                         placeholder="Comece a digitar o conteúdo do documento..."
