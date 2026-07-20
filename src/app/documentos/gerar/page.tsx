@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Check, Copy, Loader2, Sparkles, Wand2 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -151,6 +151,15 @@ export default function GerarDocumentoPage() {
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<string | null>(null);
   const [generated, setGenerated] = useState<{ id: string; name: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [isMono, setIsMono] = useState(true);
+
+  const handleCopyClipboard = useCallback(() => {
+    if (!preview) return;
+    navigator.clipboard.writeText(preview);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [preview]);
 
   useEffect(() => {
     const load = async () => {
@@ -377,11 +386,42 @@ export default function GerarDocumentoPage() {
           )}
 
           {selectedTemplate && (
-            <div className="space-y-3 rounded-lg border bg-card p-4 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+            <div className="space-y-3 rounded-xl border border-muted bg-card p-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-2">
                 <div>
-                  <Label className="text-xs font-semibold">Conteúdo do Documento (Editável)</Label>
+                  <Label className="text-xs font-semibold text-foreground">Conteúdo do Documento (Editável)</Label>
                   <p className="text-[11px] text-muted-foreground">Você pode editar o texto livremente abaixo antes de gerar o PDF.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsMono((prev) => !prev)}
+                    className="h-7 text-[10px]"
+                  >
+                    {isMono ? "Usar Fonte Sans" : "Usar Fonte Mono"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyClipboard}
+                    disabled={!preview?.trim()}
+                    className="h-7 text-xs flex items-center gap-1"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        <span>Copiado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>Copiar</span>
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
 
@@ -436,14 +476,23 @@ export default function GerarDocumentoPage() {
                 </div>
               </div>
 
-              {/* Textarea editável */}
-              <textarea
-                value={preview ?? ""}
-                onChange={(e) => setPreview(e.target.value)}
-                rows={16}
-                className="w-full min-h-[280px] rounded-lg border border-input bg-background p-3 text-xs font-mono leading-relaxed text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
-                placeholder="Selecione um template ou clique em 'Atualizar das Variáveis' para visualizar e editar o documento..."
-              />
+              {/* Textarea editável estilo página de folha branca */}
+              <div className="relative rounded-lg border bg-slate-50 dark:bg-zinc-900/40 p-2.5">
+                <textarea
+                  value={preview ?? ""}
+                  onChange={(e) => setPreview(e.target.value)}
+                  rows={20}
+                  className={`w-full min-h-[380px] rounded-md border border-input/60 bg-background p-4 text-xs leading-relaxed text-foreground shadow-inner outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                    isMono ? "font-mono" : "font-sans"
+                  }`}
+                  placeholder="Selecione um template ou clique em 'Atualizar das Variáveis' para visualizar e editar o documento..."
+                />
+                <div className="mt-1.5 flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
+                  <span>{preview ? preview.trim().split(/\s+/).filter(Boolean).length : 0} palavras</span>
+                  <span>•</span>
+                  <span>{preview?.length || 0} caracteres</span>
+                </div>
+              </div>
             </div>
           )}
         </div>

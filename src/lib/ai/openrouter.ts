@@ -31,7 +31,7 @@ export async function getAiSettings() {
 }
 
 export async function generateWithOpenRouter(params: { model: string; system: string; prompt: string; lawFirmId: string; actorId: string; operation: string }) {
-  const result = await request("/chat/completions", { model: params.model, messages: [{ role: "system", content: params.system }, { role: "user", content: params.prompt }], temperature: 0.2, max_tokens: 1800 });
+  const result = await request("/chat/completions", { model: params.model, messages: [{ role: "system", content: params.system }, { role: "user", content: params.prompt }], temperature: 0.2, max_tokens: 4000 });
   const usage = (result.usage ?? {}) as OpenRouterUsage;
   const admin = getSupabaseAdminClient();
   if (admin) await (admin as any).from("ai_usage_logs").insert({ law_firm_id: params.lawFirmId, actor_id: params.actorId, operation: params.operation, model: params.model, prompt_tokens: usage.prompt_tokens ?? 0, completion_tokens: usage.completion_tokens ?? 0, total_tokens: usage.total_tokens ?? 0, cost_usd: usage.cost ?? 0, generation_id: result.id ?? null });
