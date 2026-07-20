@@ -7,6 +7,8 @@ import { z } from "zod";
 import { can } from "@/lib/auth/permissions";
 import { requireAppContext } from "@/lib/auth/require-app-context";
 import { extractPlaceholders, renderTemplate } from "@/lib/documents/template-engine";
+import { createGeneratedDocumentPdf } from "@/lib/documents/document-pdf";
+import { withoutDuplicateSystemTemplates } from "@/lib/documents/template-catalog";
 import { systemDocumentTemplates } from "@/lib/documents/system-templates";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivityEvent } from "@/lib/timeline/queries";
@@ -93,7 +95,7 @@ export async function getTemplatesForGeneration() {
     createdAt: template.created_at,
   }));
 
-  return [...systemTemplates, ...officeTemplates];
+  return withoutDuplicateSystemTemplates([...systemTemplates, ...officeTemplates]);
 }
 
 // Buscar entidade para preenchimento automático
@@ -157,6 +159,9 @@ export async function getEntityData(entityType: string, entityId: string): Promi
   // Contexto do escritório
   contextData["firm.name"] = context.lawFirm.name;
   contextData["firm.slug"] = context.lawFirm.slug;
+  contextData["firm.document"] = context.lawFirm.document ?? "";
+  contextData["firm.email"] = context.lawFirm.email ?? "";
+  contextData["firm.phone"] = context.lawFirm.phone ?? "";
   contextData["today"] = new Date().toLocaleDateString("pt-BR");
 
   return contextData;
@@ -180,13 +185,25 @@ export async function generateDocument(data: z.infer<typeof generateSchema>): Pr
   const supabase = await getSupabaseServerClient();
   if (!supabase) throw new Error("Erro ao conectar");
 
-  const fileName = `${parsed.name.replace(/[^a-zA-Z0-9._-]/g, "_") || "documento"}.txt`;
+  const fileName = `${parsed.name.replace(/[^a-zA-Z0-9._-]/g, "_") || "documento"}.pdf`;
   const storagePath = `${context.lawFirm.id}/generated/${randomUUID()}-${fileName}`;
-  const file = new Blob([parsed.content], { type: "text/plain;charset=utf-8" });
+  let logoBytes: Uint8Array | undefined;
+  if (context.lawFirm.logoPath) {
+    const { data: logoFile } = await supabase.storage.from("branding").download(context.lawFirm.logoPath);
+    if (logoFile) logoBytes = new Uint8Array(await logoFile.arrayBuffer());
+  }
+  const pdfBytes = await createGeneratedDocumentPdf({
+    content: parsed.content,
+    title: parsed.name,
+    firm: context.lawFirm,
+    logoBytes,
+    logoPath: context.lawFirm.logoPath,
+  });
+  const file = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
   const { error: uploadError } = await supabase.storage
     .from("documents")
     .upload(storagePath, file, {
-      contentType: "text/plain;charset=utf-8",
+      contentType: "application/pdf",
       upsert: false,
     });
 
@@ -198,8 +215,8 @@ export async function generateDocument(data: z.infer<typeof generateSchema>): Pr
     .insert({
       law_firm_id: context.lawFirm.id,
       name: parsed.name,
-      mime_type: "text/plain;charset=utf-8",
-      size_bytes: new TextEncoder().encode(parsed.content).length,
+      mime_type: "application/pdf",
+      size_bytes: pdfBytes.length,
       storage_path: storagePath,
       entity_type: parsed.entityType ?? "documento_gerado",
       entity_id: parsed.entityId ?? null,

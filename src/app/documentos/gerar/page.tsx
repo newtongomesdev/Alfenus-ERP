@@ -105,17 +105,9 @@ export default function GerarDocumentoPage() {
   }, [selectedTemplate, docName, variables, entityType, entityId]);
 
   const handleDownload = useCallback(() => {
-    if (!preview) return;
-    const blob = new Blob([preview], { type: "text/plain;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${docName || "documento"}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, [preview, docName]);
+    if (!generated) return;
+    window.open(`/api/documentos/${generated.id}`, "_blank", "noopener,noreferrer");
+  }, [generated]);
 
   return (
     <AppShell memberName={null}>
@@ -132,9 +124,10 @@ export default function GerarDocumentoPage() {
       )}
 
       {generated && (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-          Documento &quot;{generated.name}&quot; gerado com sucesso!
-          <a href={`/documentos`} className="ml-2 underline">Ver documentos</a>
+        <div className="mb-4 rounded-lg border border-[var(--chart-2)]/30 bg-[var(--chart-2)]/5 p-3 text-sm text-foreground">
+          Documento &quot;{generated.name}&quot; gerado em PDF com sucesso.
+          <button type="button" onClick={handleDownload} className="ml-2 underline">Baixar PDF</button>
+          <a href="/documentos" className="ml-2 underline">Ver documentos</a>
         </div>
       )}
 
@@ -242,8 +235,8 @@ export default function GerarDocumentoPage() {
                 <Button onClick={handleGenerate} disabled={isPending || !docName.trim()}>
                   {isPending ? "Gerando..." : "Gerar Documento"}
                 </Button>
-                <Button type="button" variant="outline" onClick={handleDownload} disabled={!preview}>
-                  Baixar TXT
+                <Button type="button" variant="outline" onClick={handleDownload} disabled={!generated}>
+                  Baixar PDF
                 </Button>
               </div>
             </div>

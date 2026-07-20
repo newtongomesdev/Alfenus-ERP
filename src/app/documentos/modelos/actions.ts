@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { extractPlaceholders, renderTemplate } from "@/lib/documents/template-engine";
+import { withoutDuplicateSystemTemplates } from "@/lib/documents/template-catalog";
 import { systemDocumentTemplates } from "@/lib/documents/system-templates";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -60,7 +61,7 @@ export async function getTemplatesAction(): Promise<{ success: boolean; template
     if (error) throw error;
     const officeTemplates = (data ?? []).map((item) => ({ id: item.id, name: item.name, description: item.description, category: item.category, content: item.content, variables: extractPlaceholders(item.content), isSystem: false, createdAt: item.created_at }));
     const systemTemplates = systemDocumentTemplates.map((item) => ({ ...item, description: item.description, variables: extractPlaceholders(item.content), isSystem: true, createdAt: "" }));
-    return { success: true, templates: [...systemTemplates, ...officeTemplates] };
+    return { success: true, templates: withoutDuplicateSystemTemplates([...systemTemplates, ...officeTemplates]) };
   } catch (error) { return { success: false, error: String(error) }; }
 }
 
