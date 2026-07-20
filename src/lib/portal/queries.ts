@@ -16,11 +16,11 @@ export async function getClientPortalDashboard(lawFirmId: string) {
   const [invitesResult, clientsResult] = await Promise.all([
     supabase
       .from("client_portal_invites")
-      .select("id, token, email, status, expires_at, last_access_at, created_at, client_id, clients(name)")
+      .select("id, token, email, status, expires_at, last_access_at, created_at, client_id, clients(name, phone)")
       .eq("law_firm_id", lawFirmId)
       .order("created_at", { ascending: false })
       .limit(100),
-    supabase.from("clients").select("id, name, email").eq("law_firm_id", lawFirmId).is("archived_at", null).order("name"),
+    supabase.from("clients").select("id, name, email, phone").eq("law_firm_id", lawFirmId).is("archived_at", null).order("name"),
   ]);
 
   if (invitesResult.error) throw invitesResult.error;
@@ -37,7 +37,7 @@ export async function getClientPortalDashboard(lawFirmId: string) {
         last_access_at: string | null;
         created_at: string;
         client_id: string;
-        clients: { name: string } | null;
+        clients: { name: string; phone: string | null } | null;
       };
       return {
         id: row.id,
@@ -49,9 +49,10 @@ export async function getClientPortalDashboard(lawFirmId: string) {
         createdAt: row.created_at,
         clientId: row.client_id,
         clientName: row.clients?.name ?? "Cliente",
+        clientPhone: row.clients?.phone ?? null,
       };
     }),
-    clients: (clientsResult.data ?? []).map((item) => item as { id: string; name: string; email: string | null }),
+    clients: (clientsResult.data ?? []).map((item) => item as { id: string; name: string; email: string | null; phone: string | null }),
   };
 }
 

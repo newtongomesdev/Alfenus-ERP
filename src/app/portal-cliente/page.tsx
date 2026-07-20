@@ -7,10 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAppContext } from "@/lib/auth/context";
-import { formatDateTime } from "@/lib/formatters";
 import { getClientPortalDashboard } from "@/lib/portal/queries";
-
-import { createPortalInviteAction, revokePortalInviteAction } from "./actions";
+import { InvitesTable } from "./invites-table";
+import { createPortalInviteAction } from "./actions";
 
 export default async function ClientPortalAdminPage() {
   const context = await getAppContext();
@@ -32,63 +31,84 @@ export default async function ClientPortalAdminPage() {
   return (
     <AppShell memberName={context.member.name}>
       <div className="space-y-6">
-        <PageHeader title="Portal do cliente" description="Gere links temporários para clientes acompanharem processos, contratos, prazos e documentos." />
+        <PageHeader 
+          title="Portal do Cliente" 
+          description="Gere links temporários e gerencie o acesso de seus clientes para acompanhamento de casos, contratos e prazos." 
+        />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <Card className="rounded-lg">
-            <CardHeader>
-              <CardTitle>Convites</CardTitle>
-              <CardDescription>Links de leitura por cliente.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {data.invites.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum convite criado.</p> : null}
-                {data.invites.map((invite) => (
-                  <div key={invite.id} className="flex flex-col gap-3 border-b pb-3 last:border-0 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <p className="font-medium">{invite.clientName}</p>
-                      <p className="text-sm text-muted-foreground">{invite.email ?? "Sem e-mail vinculado"} · {invite.status}</p>
-                      <Link className="break-all text-sm underline" href={`/portal/${invite.token}`}>{`/portal/${invite.token}`}</Link>
-                      <p className="text-xs text-muted-foreground">Criado em {formatDateTime(invite.createdAt)}{invite.lastAccessAt ? ` · último acesso ${formatDateTime(invite.lastAccessAt)}` : ""}</p>
-                    </div>
-                    {invite.status === "ativo" ? (
-                      <form action={revokePortalInviteAction}>
-                        <input type="hidden" name="inviteId" value={invite.id} />
-                        <Button type="submit" variant="outline" size="sm">Revogar</Button>
-                      </form>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-800">Acessos Compartilhados</h2>
+            <InvitesTable invites={data.invites} />
+          </div>
 
-          <Card className="h-fit rounded-lg">
-            <CardHeader>
-              <CardTitle>Novo convite</CardTitle>
-              <CardDescription>O link abre uma área pública restrita por token.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form action={createPortalInviteAction} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientId">Cliente</Label>
-                  <select id="clientId" name="clientId" className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm" required>
-                    <option value="">Selecione</option>
-                    {data.clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail do cliente</Label>
-                  <Input id="email" name="email" type="email" placeholder="cliente@email.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expiresAt">Expira em</Label>
-                  <Input id="expiresAt" name="expiresAt" type="date" />
-                </div>
-                <Button type="submit" className="w-full" disabled={data.clients.length === 0}>Gerar link</Button>
-              </form>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card className="h-fit rounded-xl border border-slate-200/60 bg-white shadow-sm">
+              <CardHeader className="bg-slate-50/50 border-b rounded-t-xl py-4">
+                <CardTitle className="text-base">Novo acesso</CardTitle>
+                <CardDescription>Gere um link temporário exclusivo de acesso rápido.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-5">
+                <form action={createPortalInviteAction} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="clientId" className="text-xs font-semibold text-slate-600">Cliente</Label>
+                    <select id="clientId" name="clientId" className="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" required>
+                      <option value="">Selecione um cliente</option>
+                      {data.clients.map((client) => (
+                        <option key={client.id} value={client.id}>
+                          {client.name} {client.phone ? `(${client.phone})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-xs font-semibold text-slate-600">E-mail do cliente</Label>
+                    <Input id="email" name="email" type="email" placeholder="cliente@email.com" className="h-9 rounded-lg" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="expiresAt" className="text-xs font-semibold text-slate-600">Data de expiração</Label>
+                    <Input id="expiresAt" name="expiresAt" type="date" className="h-9 rounded-lg" />
+                    <p className="text-[10px] text-muted-foreground">Deixe em branco para acesso permanente.</p>
+                  </div>
+
+                  <div className="border-t pt-4 space-y-3">
+                    <p className="text-xs font-semibold text-slate-600">Opções de compartilhamento</p>
+                    
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="notifyWhatsapp"
+                        name="notifyWhatsapp"
+                        defaultChecked
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor="notifyWhatsapp" className="text-xs font-normal text-slate-600 cursor-pointer">
+                        Preparar convite para WhatsApp
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="notifyEmail"
+                        name="notifyEmail"
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor="notifyEmail" className="text-xs font-normal text-slate-600 cursor-pointer">
+                        Registrar preferência de E-mail
+                      </Label>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full mt-2 rounded-lg" disabled={data.clients.length === 0}>
+                    Gerar link de acesso
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </AppShell>
