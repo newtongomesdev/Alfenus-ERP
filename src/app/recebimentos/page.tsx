@@ -24,6 +24,10 @@ function ReceivablesUnavailable({ status }: { status: string }) {
   return <AppShell memberName={null}><div className="space-y-6"><PageHeader title="Recebimentos" description="Acompanhe parcelas, pagamentos e inadimplência." /><Card className="rounded-lg border-dashed"><CardContent className="flex items-center justify-between gap-4 p-6"><p className="text-sm text-muted-foreground">{message}</p>{status !== "missing-env" ? <Link href={href} className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">{status === "missing-tenant" ? "Criar escritório" : "Entrar"}</Link> : null}</CardContent></Card></div></AppShell>;
 }
 
+function ReceivablesLoadError() {
+  return <AppShell memberName={null}><div className="space-y-6"><PageHeader title="Recebimentos" description="Acompanhe parcelas, pagamentos e inadimplência." /><Card className="rounded-lg border-destructive/30"><CardContent className="flex items-start gap-3 p-6"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><p className="font-medium">Não foi possível carregar os recebimentos.</p><p className="mt-1 text-sm text-muted-foreground">Confira se as migrations financeiras foram aplicadas no Supabase e tente novamente.</p><Link href="/recebimentos" className="mt-4 inline-flex rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted">Tentar novamente</Link></div></CardContent></Card></div></AppShell>;
+}
+
 export default async function ReceivablesPage({ searchParams }: { searchParams: Promise<{ registrado?: string; cobranca?: string; erro?: string; estornado?: string; duplicado?: string; page?: string; de?: string; ate?: string; status?: string }> }) {
   const context = await getAppContext();
   const params = await searchParams;
@@ -31,7 +35,13 @@ export default async function ReceivablesPage({ searchParams }: { searchParams: 
   const page = Math.max(1, Number(params.page ?? 1));
   if (context.status !== "ready" || !context.member || !context.lawFirm) return <ReceivablesUnavailable status={context.status} />;
 
-  const overview = await getReceivablesOverview(context.lawFirm.id, page, PAGE_SIZE);
+  let overview;
+  try {
+    overview = await getReceivablesOverview(context.lawFirm.id, page, PAGE_SIZE);
+  } catch (error) {
+    console.error("[recebimentos] falha ao carregar recebíveis", { error: String(error), lawFirmId: context.lawFirm.id });
+    return <ReceivablesLoadError />;
+  }
   const canRegister = can(context.member.role, "pagamentos.registrar");
   const today = new Date().toISOString().slice(0, 10);
 

@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataJudLookup } from "@/components/datajud-lookup";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAppContext } from "@/lib/auth/context";
@@ -229,6 +230,7 @@ export default async function NewProcessPage({
             </form>
           </CardContent>
         </Card>
+        <DataJudLookup />
       </div>
     </AppShell>
   );

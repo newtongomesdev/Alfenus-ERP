@@ -50,7 +50,6 @@ export const navigationSections = [
       { label: "Solicitações", href: "/solicitacoes", icon: Inbox },
       { label: "Correspondentes", href: "/correspondentes", icon: Users },
       { label: "Conflitos", href: "/conflitos", icon: FileSearch },
-      { label: "Conflitos Avan", href: "/conflitos/avancado", icon: FileSearch },
       { label: "Prazos", href: "/prazos", icon: CalendarDays },
       { label: "Agenda", href: "/agenda", icon: Clock3 },
       { label: "Tarefas", href: "/tarefas", icon: BriefcaseBusiness },

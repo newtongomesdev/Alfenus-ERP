@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Building2,
   HeartPulse,
+  Bot,
   LayoutDashboard,
   ScrollText,
   Users,
@@ -19,6 +20,7 @@ const adminNavItems = [
   { label: "Usuários", href: "/admin/usuarios", icon: Users },
   { label: "Logs", href: "/admin/logs", icon: ScrollText },
   { label: "Saúde", href: "/admin/saude", icon: HeartPulse },
+  { label: "IA e RAG", href: "/admin/ia", icon: Bot },
 ];
 
 export function AdminSidebar() {

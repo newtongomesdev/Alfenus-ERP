@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, FileText, Eye, Trash2, Plus, Tag } from "lucide-react";
 
-import { getTemplatesAction, previewTemplateAction, deleteTemplateAction } from "./actions";
+import { copySystemTemplateAction, createTemplateAction, getTemplatesAction, previewTemplateAction, deleteTemplateAction } from "./actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ type Template = {
   content: string;
   variables: string[];
   createdAt: string;
+  isSystem: boolean;
 };
 
 const CATEGORIES = [
@@ -41,6 +42,8 @@ export default function DocumentosModelosPage() {
   const [previewVars, setPreviewVars] = useState<Record<string, string>>({});
   const [previewResult, setPreviewResult] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showCreate, setShowCreate] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   const handleLoad = async () => {
     setLoading(true);
@@ -79,6 +82,20 @@ export default function DocumentosModelosPage() {
     setTemplates((prev) => prev.filter((t) => t.id !== templateId));
   };
 
+  const handleCopy = async (template: Template) => {
+    await copySystemTemplateAction(template.id);
+    await handleLoad();
+  };
+
+  const handleCreate = async (formData: FormData) => {
+    setCreateError("");
+    try {
+      await createTemplateAction({ name: String(formData.get("name") ?? ""), description: String(formData.get("description") ?? ""), category: String(formData.get("category") ?? "geral"), content: String(formData.get("content") ?? "") });
+      setShowCreate(false);
+      await handleLoad();
+    } catch (error) { setCreateError(error instanceof Error ? error.message : "Não foi possível salvar o modelo."); }
+  };
+
   const filtered = selectedCategory === "all"
     ? templates
     : templates.filter((t) => t.category === selectedCategory);
@@ -89,16 +106,12 @@ export default function DocumentosModelosPage() {
         title="Modelos de Documento"
         description="Gerencie templates com variáveis para geração automática"
         actions={
-          <Link href="/documentos">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-          </Link>
+          <div className="flex gap-2"><Button size="sm" onClick={() => setShowCreate((value) => !value)}><Plus className="mr-2 h-4 w-4" />Novo modelo</Button><Link href="/documentos"><Button variant="outline" size="sm"><ArrowLeft className="mr-2 h-4 w-4" />Voltar</Button></Link></div>
         }
       />
 
       <div className="space-y-6">
+        {showCreate ? <Card><CardHeader><CardTitle>Novo modelo</CardTitle><CardDescription>Use variáveis como {"{{client.name}}"}, {"{{case.number}}"} e {"{{firm.name}}"}.</CardDescription></CardHeader><CardContent><form action={handleCreate} className="grid gap-3"><Input name="name" placeholder="Nome do modelo" required /><Input name="description" placeholder="Descrição breve" /><select name="category" defaultValue="geral" className="h-9 rounded-lg border border-input bg-background px-3 text-sm"><option value="geral">Geral</option><option value="peticao">Petição</option><option value="contrato">Contrato</option><option value="procuracao">Procuração</option><option value="notificacao">Notificação</option><option value="relatorio">Relatório</option></select><textarea name="content" rows={12} placeholder="Conteúdo do modelo" required className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />{createError ? <p className="text-sm text-destructive">{createError}</p> : null}<div><Button type="submit">Salvar modelo</Button></div></form></CardContent></Card> : null}
         {!loaded ? (
           <Card>
             <CardContent className="pt-6 text-center">
@@ -133,8 +146,7 @@ export default function DocumentosModelosPage() {
             {filtered.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
-                  Nenhum modelo encontrado. Crie modelos na seção de documentos
-                  adicionando a tag &quot;modelo&quot;.
+                  Nenhum modelo encontrado nesta categoria.
                 </CardContent>
               </Card>
             ) : (
@@ -173,13 +185,7 @@ export default function DocumentosModelosPage() {
                           <Eye className="mr-1 h-4 w-4" />
                           Preview
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(template.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {template.isSystem ? <Button size="sm" variant="outline" onClick={() => handleCopy(template)}>Usar como base</Button> : <Button size="sm" variant="ghost" onClick={() => handleDelete(template.id)} aria-label="Arquivar modelo"><Trash2 className="h-4 w-4" /></Button>}
                       </div>
 
                       {previewId === template.id && (

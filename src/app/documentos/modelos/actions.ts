@@ -1,124 +1,69 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-
+import { z } from "zod";
 import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
+import { extractPlaceholders, renderTemplate } from "@/lib/documents/template-engine";
+import { systemDocumentTemplates } from "@/lib/documents/system-templates";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { renderTemplate, validateTemplate, extractPlaceholders } from "@/lib/documents/template-engine";
 
-export type TemplateActionError = "ambiente" | "permissao" | "validacao" | "salvamento";
+export type DocumentTemplate = { id: string; name: string; description: string | null; category: string; content: string; variables: string[]; isSystem: boolean; createdAt: string };
 
-export interface DocumentTemplate {
-  id: string;
-  lawFirmId: string;
-  name: string;
-  description: string | null;
-  category: string;
-  content: string;
-  variables: string[];
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
+const templateSchema = z.object({ name: z.string().min(3).max(120), description: z.string().max(400).optional(), category: z.string().min(2).max(40), content: z.string().min(20).max(50_000) });
 
-export async function getTemplatesAction(): Promise<{
-  success: boolean;
-  error?: TemplateActionError;
-  templates?: DocumentTemplate[];
-}> {
+async function readyContext(): Promise<{ member: NonNullable<Awaited<ReturnType<typeof getAppContext>>["member"]>; lawFirm: NonNullable<Awaited<ReturnType<typeof getAppContext>>["lawFirm"]> }> {
   const context = await getAppContext();
-  if (context.status !== "ready" || !context.member || !context.lawFirm) {
-    return { success: false, error: "ambiente" };
-  }
-
-  if (!can(context.member.role, "documentos.visualizar" as any)) {
-    return { success: false, error: "permissao" };
-  }
-
-  const supabase = await getSupabaseServerClient();
-  if (!supabase) return { success: false, error: "ambiente" };
-
-  // Use a metadata approach - templates stored in documents table with a special tag
-  const { data } = await supabase
-    .from("documents")
-    .select("id, name, metadata, created_at, updated_at, uploaded_by")
-    .eq("law_firm_id", context.member.lawFirmId)
-    .contains("tags", ["modelo"]);
-
-  const rawDocs = (data ?? []) as any[];
-  const templates: DocumentTemplate[] = rawDocs.map((doc) => ({
-    id: doc.id,
-    lawFirmId: context.member!.lawFirmId,
-    name: doc.name,
-    description: (doc.metadata as Record<string, string>)?.description ?? null,
-    category: (doc.metadata as Record<string, string>)?.category ?? "geral",
-    content: (doc.metadata as Record<string, string>)?.content ?? "",
-    variables: extractPlaceholders((doc.metadata as Record<string, string>)?.content ?? ""),
-    createdBy: doc.uploaded_by ?? "",
-    createdAt: doc.created_at,
-    updatedAt: doc.updated_at ?? doc.created_at,
-  }));
-
-  return { success: true, templates };
+  if (context.status !== "ready" || !context.member || !context.lawFirm) throw new Error("Sessão inválida");
+  if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão para gerenciar modelos");
+  return { member: context.member, lawFirm: context.lawFirm };
 }
 
-export async function previewTemplateAction(
-  templateId: string,
-  context: Record<string, string>,
-): Promise<{
-  success: boolean;
-  error?: TemplateActionError;
-  preview?: string;
-  validation?: { valid: boolean; missingRequired: string[]; available: string[] };
-}> {
-  const appContext = await getAppContext();
-  if (appContext.status !== "ready" || !appContext.member) {
-    return { success: false, error: "ambiente" };
-  }
-
-  const supabase = await getSupabaseServerClient();
-  if (!supabase) return { success: false, error: "ambiente" };
-
-  const { data: doc } = await supabase
-    .from("documents")
-    .select("metadata")
-    .eq("id", templateId)
-    .single();
-
-  if (!doc) return { success: false, error: "validacao" };
-
-  const rawDoc = doc as any;
-  const content = (rawDoc.metadata as Record<string, string>)?.content ?? "";
-  const validation = validateTemplate(content, extractPlaceholders(content), context);
-  const preview = renderTemplate(content, context);
-
-  return { success: true, preview, validation };
+export async function getTemplatesAction(): Promise<{ success: boolean; templates?: DocumentTemplate[]; error?: string }> {
+  try {
+    const context = await readyContext();
+    const supabase = await getSupabaseServerClient();
+    if (!supabase) throw new Error("Supabase indisponível");
+    const { data, error } = await (supabase as any).from("document_templates").select("id, name, description, category, content, created_at").eq("law_firm_id", context.lawFirm.id).is("archived_at", null).order("name");
+    if (error) throw error;
+    const officeTemplates = (data ?? []).map((item: any) => ({ id: item.id, name: item.name, description: item.description, category: item.category, content: item.content, variables: extractPlaceholders(item.content), isSystem: false, createdAt: item.created_at }));
+    const systemTemplates = systemDocumentTemplates.map((item) => ({ ...item, description: item.description, variables: extractPlaceholders(item.content), isSystem: true, createdAt: "" }));
+    return { success: true, templates: [...systemTemplates, ...officeTemplates] };
+  } catch (error) { return { success: false, error: String(error) }; }
 }
 
-export async function deleteTemplateAction(
-  templateId: string,
-): Promise<{ success: boolean; error?: TemplateActionError }> {
-  const context = await getAppContext();
-  if (context.status !== "ready" || !context.member) {
-    return { success: false, error: "ambiente" };
-  }
-
-  if (!can(context.member.role, "documentos.administrar" as any)) {
-    return { success: false, error: "permissao" };
-  }
-
+export async function createTemplateAction(input: z.infer<typeof templateSchema>) {
+  const context = await readyContext();
+  const parsed = templateSchema.parse(input);
   const supabase = await getSupabaseServerClient();
-  if (!supabase) return { success: false, error: "ambiente" };
-
-  const { error } = await supabase
-    .from("documents")
-    .delete()
-    .eq("id", templateId)
-    .eq("law_firm_id", context.member.lawFirmId);
-
-  if (error) return { success: false, error: "salvamento" };
-
+  if (!supabase) throw new Error("Supabase indisponível");
+  const { error } = await (supabase as any).from("document_templates").insert({ law_firm_id: context.lawFirm.id, name: parsed.name, description: parsed.description || null, category: parsed.category, content: parsed.content, created_by: context.member.id });
+  if (error) throw error;
   revalidatePath("/documentos/modelos");
-  return { success: true };
+}
+
+export async function copySystemTemplateAction(systemTemplateId: string) {
+  const template = systemDocumentTemplates.find((item) => item.id === systemTemplateId);
+  if (!template) throw new Error("Modelo do sistema não encontrado");
+  await createTemplateAction({ name: `${template.name} - cópia`, description: template.description, category: template.category, content: template.content });
+}
+
+export async function previewTemplateAction(templateId: string, values: Record<string, string>) {
+  const context = await readyContext();
+  let content = systemDocumentTemplates.find((item) => item.id === templateId)?.content;
+  if (!content) {
+    const supabase = await getSupabaseServerClient();
+    const { data, error } = await (supabase as any).from("document_templates").select("content").eq("id", templateId).eq("law_firm_id", context.lawFirm.id).maybeSingle();
+    if (error || !data) throw new Error("Modelo não encontrado");
+    content = data.content;
+  }
+  return { success: true, preview: renderTemplate(content!, values) };
+}
+
+export async function deleteTemplateAction(templateId: string) {
+  const context = await readyContext();
+  const supabase = await getSupabaseServerClient();
+  const { error } = await (supabase as any).from("document_templates").update({ archived_at: new Date().toISOString() }).eq("id", templateId).eq("law_firm_id", context.lawFirm.id);
+  if (error) throw error;
+  revalidatePath("/documentos/modelos");
 }

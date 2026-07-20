@@ -54,16 +54,29 @@ export async function getAppContext(): Promise<AppContext> {
     return { status: "signed-out", member: null, lawFirm: null };
   }
 
-  const { data, error } = await supabase
+  const memberSelect = "id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, logo_path, plan, status, created_at)";
+  let { data, error } = await supabase
     .from("law_firm_members")
-    .select("id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, logo_path, plan, status, created_at)")
+    .select(memberSelect)
     .eq("user_id", user.id)
     .eq("status", "ativo")
     .limit(1)
     .maybeSingle();
 
   if (error) {
-    throw error;
+    // Permite que o app continue acessível enquanto a migration de branding
+    // ainda não foi aplicada no projeto Supabase de produção.
+    console.error("[auth/context] consulta completa falhou; tentando compatibilidade", { error: String(error) });
+    const fallback = await supabase
+      .from("law_firm_members")
+      .select("id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, plan, status, created_at)")
+      .eq("user_id", user.id)
+      .eq("status", "ativo")
+      .limit(1)
+      .maybeSingle();
+    data = fallback.data as typeof data;
+    error = fallback.error;
+    if (error) throw error;
   }
 
   if (!data) {
@@ -87,7 +100,7 @@ export async function getAppContext(): Promise<AppContext> {
       document: string | null;
       email: string | null;
       phone: string | null;
-      logo_path: string | null;
+      logo_path?: string | null;
       plan: string;
       status: string;
       created_at: string;
@@ -118,7 +131,7 @@ export async function getAppContext(): Promise<AppContext> {
       document: row.law_firms.document,
       email: row.law_firms.email,
       phone: row.law_firms.phone,
-      logoPath: row.law_firms.logo_path,
+      logoPath: row.law_firms.logo_path ?? null,
       plan: row.law_firms.plan,
       status: row.law_firms.status,
       createdAt: row.law_firms.created_at,
