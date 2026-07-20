@@ -2,6 +2,7 @@ import { Check, CircleAlert, CircleMinus, Pencil } from "lucide-react";
 import Link from "next/link";
 
 import { updateLawFirmAction, deleteOwnAccountAction } from "@/app/configuracoes/actions";
+import { LogoInput } from "./logo-input";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -215,7 +216,7 @@ export default async function SettingsPage({
                   </div>
                   <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="logo" className="text-xs font-semibold">Logo do escritório</Label>
-                    <Input id="logo" name="logo" type="file" accept="image/png,image/jpeg" className="h-9 text-sm" />
+                    <LogoInput />
                     <p className="text-xs text-muted-foreground">PNG ou JPG, até 2 MB. Será usada no Alfenus e nos PDFs gerados.</p>
                   </div>
                   <div className="space-y-2">
