@@ -21,7 +21,8 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({})) as { plan?: string };
   const plan = body.plan as BillingPlan;
   if (!plans.has(plan)) return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
-  const priceId = getStripePriceId(plan);
+  const { data: configuredPlan } = await (admin as any).from("plan_settings").select("stripe_price_id").eq("id", plan).maybeSingle();
+  const priceId = configuredPlan?.stripe_price_id || getStripePriceId(plan);
   if (!priceId) return NextResponse.json({ error: "Preço do plano não configurado" }, { status: 503 });
 
   const billingQuery = await (admin as unknown as { from(table: string): { select(columns: string): { eq(column: string, value: string): { maybeSingle(): Promise<{ data: { stripe_customer_id: string | null; stripe_subscription_id: string | null; stripe_subscription_status: string | null } | null }> } } } }).from("law_firms").select("stripe_customer_id, stripe_subscription_id, stripe_subscription_status").eq("id", context.lawFirm.id).maybeSingle();
