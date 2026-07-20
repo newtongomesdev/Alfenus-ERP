@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { Loader2, Sparkles, Wand2 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { getErrorMessage } from "@/lib/utils";
-import { generateDocument, getEntityData, getTemplatesForGeneration, renderDocumentTemplate } from "./actions";
+import { enhanceDocumentWithAi, generateDocument, getEntityData, getTemplatesForGeneration, renderDocumentTemplate } from "./actions";
 
 type Template = {
   id: string;
@@ -20,6 +21,121 @@ type Template = {
   variables: string[];
   isSystem: boolean;
 };
+
+const FRIENDLY_LABELS: Record<string, string> = {
+  "client.name": "Nome do Cliente",
+  "client.document": "CPF/CNPJ do Cliente",
+  "client.rg": "RG do Cliente",
+  "client.address": "Endereço do Cliente",
+  "client.email": "E-mail do Cliente",
+  "client.nationality": "Nacionalidade do Cliente",
+  "client.marital_status": "Estado Civil do Cliente",
+  "client.profession": "Profissão do Cliente",
+  "client.monthly_income": "Renda Mensal do Cliente",
+  "client.supporting_documents": "Documentos Comprobatórios do Cliente",
+
+  "case.title": "Título/Assunto do Processo",
+  "case.number": "Número do Processo",
+  "case.court": "Tribunal/Vara",
+  "case.opposing_party": "Nome da Parte Contrária",
+  "case.opposing_party_document": "CPF/CNPJ da Parte Contrária",
+  "case.opposing_party_address": "Endereço da Parte Contrária",
+  "case.class": "Classe Processual",
+
+  "firm.name": "Nome do Escritório",
+  "firm.document": "CNPJ do Escritório",
+  "firm.address": "Endereço do Escritório",
+  "firm.oab": "Inscrição da OAB do Escritório",
+  "firm.city": "Cidade do Escritório",
+  "firm.state": "Estado do Escritório",
+  "firm.email": "E-mail do Escritório",
+  "firm.phone": "Telefone do Escritório",
+
+  "contract.number": "Número do Contrato",
+  "contract.description": "Descrição dos Serviços",
+  "contract.value": "Valor do Contrato",
+  "contract.value_letter": "Valor por Extenso",
+  "contract.payment_terms": "Condições de Pagamento",
+  "contract.late_fee": "Multa de Atraso",
+  "contract.expense_reimbursement_days": "Dias para Reembolso de Despesa",
+  "contract.duration": "Duração do Contrato",
+  "contract.termination_notice": "Aviso Prévio de Rescisão (Dias)",
+  "contract.cure_period": "Prazo de Cura da Inadimplência (Dias)",
+  "contract.document_return_days": "Dias para Devolução de Documentos",
+
+  "notification.registry": "Cartório/Ofício",
+  "notification.fact": "Descrição dos Fatos (Notificação)",
+  "notification.legal_basis": "Base Legal (Notificação)",
+  "notification.deadline": "Prazo para Cumprimento",
+  "notification.request": "Providência Solicitada",
+
+  "receipt.number": "Número do Recibo",
+  "receipt.notes": "Observações do Recibo",
+  "receipt.installment": "Parcela/Referência do Recibo",
+  "receipt.type": "Tipo de Quitação (ex: plena, geral e irrevogável)",
+
+  "payment.method": "Meio de Pagamento",
+  "payment.details": "Detalhes do Pagamento",
+  "payment.date": "Data de Pagamento",
+  "payment.fee_value": "Valor dos Honorários",
+  "payment.expense_value": "Valor de Despesas/Reembolso",
+  "payment.taxes_retained": "Impostos/Retenções na Fonte",
+
+  "report.current_status": "Situação Atual do Caso (Relatório)",
+  "report.actions_taken": "Providências Realizadas (Relatório)",
+  "report.next_steps": "Próximos Passos e Cronograma (Relatório)",
+  "report.client_guidance": "Orientações ao Cliente (Relatório)",
+  "report.risks": "Pontos de Atenção e Riscos (Relatório)",
+
+  "petition.purpose": "Objetivo/Fato Jurídico Relevante (Petição)",
+  "petition.document_list": "Relação de Documentos (Petição)",
+
+  "proposal.reference": "Referência da Proposta",
+  "proposal.scope": "Escopo dos Serviços (Proposta)",
+  "proposal.scope_limit": "Limitações do Escopo (Proposta)",
+  "proposal.payment_terms": "Condições de Pagamento da Proposta",
+  "proposal.estimated_duration": "Prazo Estimado de Execução",
+  "proposal.validity": "Prazo de Validade da Proposta",
+
+  "attendance.date": "Data do Atendimento",
+  "attendance.time": "Horário de Início",
+  "attendance.end_time": "Horário de Término",
+  "attendance.duration": "Duração do Atendimento",
+  "attendance.purpose": "Finalidade do Atendimento",
+  "attendance.documents": "Documentos Apresentados",
+  "attendance.notes": "Observações do Atendimento",
+
+  "closing.number": "Número do Termo de Encerramento",
+  "closing.scope": "Escopo do Atendimento (Encerramento)",
+  "closing.actions_performed": "Providências Cumpridas (Encerramento)",
+  "closing.final_status": "Situação Final do Caso (Encerramento)",
+  "closing.pending_items": "Pendências Identificadas (Encerramento)",
+  "closing.client_guidance": "Orientações Finais ao Cliente",
+  "closing.recommendations": "Recomendações Adicionais (Encerramento)",
+  "closing.payment_status": "Situação Financeira de Honorários/Despesas",
+  "closing.document_return": "Entrega de Documentos (Encerramento)",
+  "closing.complaint_deadline": "Prazo para Reclamações (Dias)",
+
+  "substitute.lawyer_name": "Nome do Advogado Substabelecido",
+  "substitute.oab": "OAB do Advogado Substabelecido",
+  "substitute.address": "Endereço Profissional Substabelecido",
+  "substitute.reservation_clause": "Cláusula de Reserva (com ou sem reserva)",
+
+  "agreement.installments": "Número de Parcelas do Acordo",
+  "agreement.payment_details": "Detalhes de Pagamento do Acordo",
+  "agreement.penalty": "Multa por Descumprimento (%)",
+
+  "motion.statement": "Conteúdo/Motivo da Manifestação (Petição)",
+
+  "today": "Data de Hoje",
+};
+
+function getFriendlyLabel(key: string): string {
+  if (FRIENDLY_LABELS[key]) return FRIENDLY_LABELS[key];
+  return key
+    .replace(/[._]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export default function GerarDocumentoPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -83,17 +199,28 @@ export default function GerarDocumentoPage() {
     }
   }, [entityType, entityId, handlePreview, selectedTemplate, variables]);
 
-  const handleGenerate = useCallback(() => {
-    if (!selectedTemplate) return;
+  const handleAiEnhance = useCallback(async (instruction: "formalize" | "fix_grammar" | "summarize" | "expand") => {
+    if (!preview || !preview.trim()) return;
     startTransition(async () => {
       try {
         setError(null);
-        const rendered = await renderDocumentTemplate(selectedTemplate.id, variables);
-        setPreview(rendered);
+        const enhanced = await enhanceDocumentWithAi({ content: preview, instruction });
+        setPreview(enhanced);
+      } catch (e: unknown) {
+        setError(getErrorMessage(e));
+      }
+    });
+  }, [preview]);
+
+  const handleGenerate = useCallback(() => {
+    if (!selectedTemplate || !preview) return;
+    startTransition(async () => {
+      try {
+        setError(null);
         const result = await generateDocument({
           templateId: selectedTemplate.id,
           name: docName || selectedTemplate.name,
-          content: rendered,
+          content: preview,
           entityType: entityType || undefined,
           entityId: entityId || undefined,
         });
@@ -102,7 +229,7 @@ export default function GerarDocumentoPage() {
         setError(getErrorMessage(e));
       }
     });
-  }, [selectedTemplate, docName, variables, entityType, entityId]);
+  }, [selectedTemplate, docName, preview, entityType, entityId]);
 
   const handleDownload = useCallback(() => {
     if (!generated) return;
@@ -180,9 +307,9 @@ export default function GerarDocumentoPage() {
                 <Label className="text-xs font-medium">Preencher com dados de (opcional)</Label>
                 <div className="flex gap-2">
                   <select
-                    value={entityType}
-                    onChange={(e) => setEntityType(e.target.value)}
-                    className="h-8 rounded border bg-transparent px-2 text-sm"
+                      value={entityType}
+                      onChange={(e) => setEntityType(e.target.value)}
+                      className="h-8 rounded border bg-transparent px-2 text-sm"
                   >
                     <option value="">Nenhuma</option>
                     <option value="client">Cliente</option>
@@ -210,7 +337,7 @@ export default function GerarDocumentoPage() {
                 {Object.keys(variables).length > 0 ? (
                   Object.entries(variables).map(([key, value]) => (
                     <div key={key}>
-                      <Label className="text-xs">{key}</Label>
+                      <Label className="text-xs">{getFriendlyLabel(key)}</Label>
                       <Input
                         value={value}
                         onChange={(e) => setVariables((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -230,10 +357,17 @@ export default function GerarDocumentoPage() {
 
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" onClick={() => handlePreview()} disabled={isPending}>
-                  Atualizar preview
+                  Atualizar das Variáveis
                 </Button>
-                <Button onClick={handleGenerate} disabled={isPending || !docName.trim()}>
-                  {isPending ? "Gerando..." : "Gerar Documento"}
+                <Button onClick={handleGenerate} disabled={isPending || !docName.trim() || !preview?.trim()}>
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Gerando...
+                    </>
+                  ) : (
+                    "Gerar Documento (PDF)"
+                  )}
                 </Button>
                 <Button type="button" variant="outline" onClick={handleDownload} disabled={!generated}>
                   Baixar PDF
@@ -243,11 +377,73 @@ export default function GerarDocumentoPage() {
           )}
 
           {selectedTemplate && (
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <Label className="text-xs font-medium">Preview</Label>
-              <pre className="mt-2 max-h-96 overflow-y-auto rounded border bg-background p-3 text-xs whitespace-pre-wrap">
-                {preview || "Atualize o preview para ver o documento renderizado."}
-              </pre>
+            <div className="space-y-3 rounded-lg border bg-card p-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+                <div>
+                  <Label className="text-xs font-semibold">Conteúdo do Documento (Editável)</Label>
+                  <p className="text-[11px] text-muted-foreground">Você pode editar o texto livremente abaixo antes de gerar o PDF.</p>
+                </div>
+              </div>
+
+              {/* Botões do Assistente de IA */}
+              <div className="rounded-lg border bg-muted/40 p-2.5 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Assistente de IA:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAiEnhance("formalize")}
+                    disabled={isPending || !preview?.trim()}
+                    className="h-7 text-xs bg-background"
+                  >
+                    <Wand2 className="mr-1 h-3 w-3 text-purple-500" />
+                    Formalizar Linguagem
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAiEnhance("fix_grammar")}
+                    disabled={isPending || !preview?.trim()}
+                    className="h-7 text-xs bg-background"
+                  >
+                    Corrigir Ortografia
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAiEnhance("summarize")}
+                    disabled={isPending || !preview?.trim()}
+                    className="h-7 text-xs bg-background"
+                  >
+                    Resumir
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAiEnhance("expand")}
+                    disabled={isPending || !preview?.trim()}
+                    className="h-7 text-xs bg-background"
+                  >
+                    Expandir
+                  </Button>
+                </div>
+              </div>
+
+              {/* Textarea editável */}
+              <textarea
+                value={preview ?? ""}
+                onChange={(e) => setPreview(e.target.value)}
+                rows={16}
+                className="w-full min-h-[280px] rounded-lg border border-input bg-background p-3 text-xs font-mono leading-relaxed text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                placeholder="Selecione um template ou clique em 'Atualizar das Variáveis' para visualizar e editar o documento..."
+              />
             </div>
           )}
         </div>

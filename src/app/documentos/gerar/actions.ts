@@ -12,6 +12,7 @@ import { withoutDuplicateSystemTemplates } from "@/lib/documents/template-catalo
 import { systemDocumentTemplates } from "@/lib/documents/system-templates";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivityEvent } from "@/lib/timeline/queries";
+import { generateWithOpenRouter, getAiSettings } from "@/lib/ai/openrouter";
 
 export type GeneratedDocument = {
   id: string;
@@ -276,3 +277,44 @@ export async function renderDocumentTemplate(templateId: string, values: Record<
 
   return renderTemplate(content ?? "", values);
 }
+
+export async function enhanceDocumentWithAi(input: {
+  content: string;
+  instruction: "formalize" | "fix_grammar" | "summarize" | "expand";
+}) {
+  const context = await requireAppContext();
+  if (!can(context.member.role, "processos.editar")) throw new Error("Sem permissão para utilizar o assistente de IA");
+
+  let settings;
+  try {
+    settings = await getAiSettings();
+  } catch {
+    throw new Error("Assistente de IA não está configurado no momento.");
+  }
+
+  if (!settings || !settings.enabled) {
+    throw new Error("A funcionalidade de IA está desativada no sistema.");
+  }
+
+  const prompts: Record<string, string> = {
+    formalize: "Reescreva e aprimore o texto do documento jurídico a seguir para torná-lo mais formal, elegante, técnico e preciso para a prática advocatícia brasileira. Mantenha os dados e fatos originais intactos.",
+    fix_grammar: "Revise e corrija eventuais erros de ortografia, concordância verbal e pontuação no texto jurídico a seguir. Não altere o sentido nem fatos descritos.",
+    summarize: "Resuma e simplifique o texto a seguir, mantendo apenas os pontos essenciais e jurídicos relevantes de forma clara e concisa.",
+    expand: "Aprofunde e expanda a fundamentação e os detalhes do texto a seguir, tornando-o mais completo e abrangente, sem inventar dados cadastrais.",
+  };
+
+  const systemPrompt = "Você é um assistente de IA especializado em redação jurídica brasileira para o sistema Alfenus ERP. Retorne APENAS o texto do documento revisado/aprimorado, sem saudações, notas explicativas ou tags markdown.";
+  const userPrompt = `${prompts[input.instruction] || prompts.formalize}\n\nDocumento:\n${input.content}`;
+
+  const result = await generateWithOpenRouter({
+    model: settings.active_model,
+    system: systemPrompt,
+    prompt: userPrompt,
+    lawFirmId: context.lawFirm.id,
+    actorId: context.member.id,
+    operation: "document_ai_enhance",
+  });
+
+  return result.content ? result.content.trim() : input.content;
+}
+
