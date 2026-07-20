@@ -12,6 +12,8 @@ import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { getContractFormOptions } from "@/lib/contracts/queries";
 
+import { QuickChargeForm } from "./quick-charge-form";
+
 const errorMessages: Record<string, string> = {
   ambiente: "Configure o Supabase antes de criar cobranças.",
   permissao: "Seu papel não tem permissão para criar cobranças.",
@@ -45,21 +47,17 @@ export default async function NewQuickChargePage({ searchParams }: { searchParam
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"><CircleDollarSign className="size-5" /></div>
-              <div><CardTitle>Cobrança rápida</CardTitle><CardDescription>Cria uma parcela única, pronta para acompanhar, receber, emitir recibo ou estornar.</CardDescription></div>
+              <div><CardTitle>Cobrança rápida</CardTitle><CardDescription>Crie uma cobrança à vista ou parcelada para acompanhar e emitir recibos.</CardDescription></div>
             </div>
           </CardHeader>
           <CardContent>
             {!canCreate ? <p className="text-sm text-muted-foreground">Seu papel não pode criar cobranças.</p> : options.clients.length === 0 ? <div className="rounded-lg border border-dashed p-6"><p className="font-medium">Cadastre um cliente antes de cobrar.</p><Link className="mt-3 inline-flex text-sm underline underline-offset-4" href="/clientes/novo">Cadastrar cliente</Link></div> : (
-              <form action={createQuickChargeAction} className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2"><Label htmlFor="clientId">Cliente</Label><select id="clientId" name="clientId" required className="h-9 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground"><option value="">Selecione um cliente</option>{options.clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></div>
-                <div className="space-y-2 sm:col-span-2"><Label htmlFor="description">O que está sendo cobrado</Label><Input id="description" name="description" required placeholder="Ex.: Consulta inicial e análise de documentos" /></div>
-                <div className="space-y-2"><Label htmlFor="amount">Valor</Label><Input id="amount" name="amount" required inputMode="decimal" placeholder="500,00" /></div>
-                <div className="space-y-2"><Label htmlFor="dueDate">Vencimento</Label><Input id="dueDate" name="dueDate" type="date" defaultValue={today} required /></div>
-                <div className="space-y-2"><Label htmlFor="paymentMethod">Forma preferida</Label><select id="paymentMethod" name="paymentMethod" defaultValue="pix" required className="h-9 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground"><option value="pix">Pix</option><option value="pix_recorrente">Pix recorrente</option><option value="link_pagamento">Link de pagamento</option><option value="boleto">Boleto</option><option value="cartao">Cartão</option><option value="transferencia">Transferência</option><option value="deposito">Depósito</option><option value="dinheiro">Dinheiro</option><option value="cheque">Cheque</option><option value="outro">Outro</option></select></div>
-                <div className="flex items-end"><p className="pb-2 text-xs text-muted-foreground">O recebimento será confirmado depois, na tela de recebimentos.</p></div>
-                {errorMessage ? <p className="text-sm text-destructive sm:col-span-2">{errorMessage}</p> : null}
-                <div className="flex gap-2 sm:col-span-2"><Button type="submit">Criar cobrança</Button><Link href="/recebimentos" className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-2.5 text-sm font-medium hover:bg-muted">Cancelar</Link></div>
-              </form>
+              <QuickChargeForm
+                clients={options.clients}
+                today={today}
+                errorMessage={errorMessage}
+                createQuickChargeAction={createQuickChargeAction}
+              />
             )}
           </CardContent>
         </Card>

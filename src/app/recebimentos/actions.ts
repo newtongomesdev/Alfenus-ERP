@@ -160,6 +160,12 @@ export async function registerPaymentAction(formData: FormData) {
   redirect("/recebimentos?registrado=1");
 }
 
+function addMonths(dateStr: string, months: number): string {
+  const d = new Date(dateStr + "T12:00:00.000Z");
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
 export async function createQuickChargeAction(formData: FormData) {
   const context = await getAppContext();
   if (context.status === "missing-env") redirect("/recebimentos/nova?erro=ambiente");
@@ -172,6 +178,12 @@ export async function createQuickChargeAction(formData: FormData) {
   const dueDate = String(formData.get("dueDate") ?? "");
   const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
   const amountCents = parseCurrencyToCents(formData.get("amount"));
+
+  const paymentType = String(formData.get("paymentType") ?? "avista");
+  const installmentsCountRaw = Number(formData.get("installmentsCount") ?? "1");
+  const installmentsCount = paymentType === "parcelado" ? Math.max(2, installmentsCountRaw) : 1;
+  const notifyWhatsapp = formData.get("notifyWhatsapp") === "on";
+  const notifyEmail = formData.get("notifyEmail") === "on";
 
   if (!clientId || description.length < 3 || !dueDate || paymentMethod.length < 2 || amountCents <= 0) {
     redirect("/recebimentos/nova?erro=validacao");
@@ -189,7 +201,15 @@ export async function createQuickChargeAction(formData: FormData) {
 
   if (!client) redirect("/recebimentos/nova?erro=cliente");
 
-  // A cobrança rápida usa um contrato de parcela única para preservar recibos, estornos e auditoria.
+  const hasInstallments = paymentType === "parcelado";
+  const frequency = hasInstallments ? "mensal" : "unica";
+  
+  const notesParts = [
+    "Cobrança rápida criada em recebimentos.",
+    notifyWhatsapp ? "Enviar via WhatsApp" : null,
+    notifyEmail ? "Enviar via E-mail" : null
+  ].filter(Boolean).join(" | ");
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const database = supabase as any;
   const { data: contract, error: contractError } = await database
@@ -201,31 +221,43 @@ export async function createQuickChargeAction(formData: FormData) {
       total_amount_cents: amountCents,
       upfront_amount_cents: 0,
       balance_cents: amountCents,
-      has_installments: false,
-      installments_count: 1,
+      has_installments: hasInstallments,
+      installments_count: installmentsCount,
       first_due_date: dueDate,
-      frequency: "unica",
+      frequency: frequency,
       payment_method: paymentMethod,
       responsible_member_id: context.member.id,
       status: "ativo",
-      notes: "Cobrança rápida criada em recebimentos.",
+      notes: notesParts,
     })
     .select("id")
     .single();
 
   if (contractError || !contract) redirect("/recebimentos/nova?erro=criacao");
 
-  const { error: installmentError } = await database.from("installments").insert({
-    law_firm_id: context.lawFirm.id,
-    contract_id: contract.id,
-    client_id: clientId,
-    number: 1,
-    original_amount_cents: amountCents,
-    final_amount_cents: amountCents,
-    due_date: dueDate,
-    payment_method: paymentMethod,
-    status: "pendente",
-  });
+  // Calculate installment values
+  const baseAmount = Math.floor(amountCents / installmentsCount);
+  const remainder = amountCents - (baseAmount * installmentsCount);
+
+  const installmentsData = [];
+  for (let i = 1; i <= installmentsCount; i++) {
+    const finalAmount = baseAmount + (i === 1 ? remainder : 0);
+    const dueDateForInstallment = addMonths(dueDate, i - 1);
+    
+    installmentsData.push({
+      law_firm_id: context.lawFirm.id,
+      contract_id: contract.id,
+      client_id: clientId,
+      number: i,
+      original_amount_cents: finalAmount,
+      final_amount_cents: finalAmount,
+      due_date: dueDateForInstallment,
+      payment_method: paymentMethod,
+      status: "pendente",
+    });
+  }
+
+  const { error: installmentError } = await database.from("installments").insert(installmentsData);
 
   if (installmentError) {
     await database.from("contracts").delete().eq("law_firm_id", context.lawFirm.id).eq("id", contract.id);
@@ -238,7 +270,15 @@ export async function createQuickChargeAction(formData: FormData) {
     action: "criou_cobranca_rapida",
     entity_type: "contract",
     entity_id: contract.id,
-    metadata: { client_id: clientId, amount_cents: amountCents, due_date: dueDate, payment_method: paymentMethod },
+    metadata: { 
+      client_id: clientId, 
+      amount_cents: amountCents, 
+      due_date: dueDate, 
+      payment_method: paymentMethod,
+      installments_count: installmentsCount,
+      notify_whatsapp: notifyWhatsapp,
+      notify_email: notifyEmail
+    },
   });
 
   revalidatePath("/dashboard");
