@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getAdminContext } from "@/lib/admin/auth";
 
 export async function savePlanSettings(formData: FormData) {
@@ -28,8 +29,9 @@ export async function changeTenantPlan(formData: FormData) {
   const plan = String(formData.get("plan") ?? "").trim();
   if (!lawFirmId || !/^(starter|professional|business)$/.test(plan)) throw new Error("Plano inválido");
   const { error } = await (adminClient as any).from("law_firms").update({ plan, updated_at: new Date().toISOString() }).eq("id", lawFirmId);
-  if (error) throw error;
+  if (error) throw new Error(`Não foi possível alterar o plano: ${error.message}`);
   revalidatePath(`/admin/usuarios`);
   revalidatePath(`/admin/usuarios/${formData.get("userId")}`);
   revalidatePath(`/admin/escritorios/${lawFirmId}`);
+  redirect(`/admin/usuarios/${formData.get("userId")}?plano=${plan}`);
 }

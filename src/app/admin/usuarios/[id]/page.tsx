@@ -12,11 +12,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 export default async function AdminUserDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ plano?: string }>;
 }) {
   const { adminClient } = await getAdminContext();
   const { id } = await params;
+  const query = await searchParams;
 
   const detail = await getAdminUserDetail(adminClient, id);
   if (!detail) redirect("/admin/usuarios");
@@ -30,6 +33,7 @@ export default async function AdminUserDetailPage({
         </div>
 
         <PageHeader title={detail.email} description={`Membro de ${detail.membershipCount} escritório(s)`} />
+        {query.plano ? <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">Plano alterado para {query.plano} com sucesso.</div> : null}
 
         <Card className="rounded-lg">
           <CardHeader>
