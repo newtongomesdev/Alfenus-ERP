@@ -1,7 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, LogOut, UserRound } from "lucide-react";
 
-import { signOutAction } from "@/app/actions";
+import { signOutAction, getLawFirmLogoAction } from "@/app/actions";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -17,7 +20,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Header({ memberName, isAuthenticated, logoUrl }: { memberName: string | null; isAuthenticated?: boolean; logoUrl?: string | null }) {
+export function Header({ memberName, isAuthenticated }: { memberName: string | null; isAuthenticated?: boolean }) {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getLawFirmLogoAction().then((url) => {
+      if (active) {
+        setLogoUrl(url);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const initials = memberName
     ? memberName
         .split(" ")
