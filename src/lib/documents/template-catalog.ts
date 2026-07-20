@@ -20,13 +20,21 @@ export function withoutDuplicateSystemTemplates<T extends CatalogTemplate>(templ
     .filter((template) => !template.isSystem)
     .map((template) => normalizedTemplateName(template.name));
 
-  return templates.filter(
-    (template) => {
-      if (!template.isSystem) return true;
-      const systemName = normalizedTemplateName(template.name);
-      return !officeNames.some(
-        (officeName) => officeName === systemName || officeName.startsWith(systemName) || systemName.startsWith(officeName),
-      );
-    },
-  );
+  const seen = new Set<string>();
+
+  return templates.filter((template) => {
+    const normalizedName = normalizedTemplateName(template.name);
+
+    // Skip exact duplicate entries (e.g. same template inserted twice in DB)
+    if (seen.has(normalizedName)) return false;
+    seen.add(normalizedName);
+
+    // Office templates always pass through
+    if (!template.isSystem) return true;
+
+    // System template is hidden if an equivalent office template exists
+    return !officeNames.some(
+      (officeName) => officeName === normalizedName || normalizedName.startsWith(officeName),
+    );
+  });
 }
