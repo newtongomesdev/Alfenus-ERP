@@ -22,12 +22,30 @@ export const metadata: Metadata = {
   },
   description: "ERP jurídico SaaS completo para escritórios de advocacia. Gestão de processos, clientes, contratos, financeiro e equipe em um só lugar.",
   keywords: ["ERP jurídico", "escritório de advocacia", "gestão de processos", "software jurídico", "Alfenus"],
+  icons: {
+    icon: "/favicon.png",
+    apple: "/icon.png",
+  },
   openGraph: {
-    title: "Alfenus",
-    description: "ERP jurídico SaaS para escritórios de advocacia.",
+    title: "Alfenus | ERP Jurídico Inteligente",
+    description: "Gestão completa de processos, clientes, contratos, financeiro e portal do cliente para escritórios de advocacia modernos.",
     type: "website",
     locale: "pt_BR",
     siteName: "Alfenus",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Alfenus - ERP Jurídico Inteligente",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Alfenus | ERP Jurídico",
+    description: "ERP jurídico SaaS completo para escritórios de advocacia.",
+    images: ["/og-image.png"],
   },
 };
 
