@@ -65,14 +65,7 @@ export function Header({ memberName, isAuthenticated }: { memberName: string | n
               </form>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
-          <Link
-            href="/entrar"
-            className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-2.5 text-sm font-medium transition hover:bg-muted"
-          >
-            Entrar
-          </Link>
-        )}
+        ) : null}
       </div>
     </header>
   );
