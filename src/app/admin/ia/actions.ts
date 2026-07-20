@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getAdminContext } from "@/lib/admin/auth";
 import { getOpenRouterModels } from "@/lib/ai/openrouter";
 
@@ -13,6 +14,7 @@ export async function saveAiSettings(formData: FormData) {
   const { error } = await (adminClient as any).from("ai_platform_settings").upsert({ id: "default", active_model: activeModel, embedding_model: embeddingModel, enabled, updated_by: userId, updated_at: new Date().toISOString() });
   if (error) throw error;
   revalidatePath("/admin/ia");
+  redirect("/admin/ia?salvo=1");
 }
 
 export async function loadAiModels() {

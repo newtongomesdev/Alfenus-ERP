@@ -57,6 +57,7 @@ export type AdminUser = {
     lawFirmName: string;
     role: string;
     status: string;
+    plan: string;
   }>;
 };
 
@@ -232,6 +233,7 @@ export async function getAdminTenantDetail(
       email: m.email,
       role: m.role,
       status: m.status,
+      plan: "starter",
       lastAccessAt: m.last_access_at,
     })),
     recentLogs: (logsResult.data ?? []).map((l) => ({
@@ -277,19 +279,21 @@ export async function getAdminUsers(
       lawFirmName: "", // will be filled below
       role: m.role,
       status: m.status,
+      plan: "starter",
     });
   }
 
   // Fill law firm names
   const firmIds = [...new Set((allMembers ?? []).map((m) => m.law_firm_id))];
   const { data: firms } = firmIds.length > 0
-    ? await adminClient.from("law_firms").select("id, name").in("id", firmIds)
+    ? await adminClient.from("law_firms").select("id, name, plan").in("id", firmIds)
     : { data: [] };
   const firmNames = new Map((firms ?? []).map((f) => [f.id, f.name]));
 
   for (const user of userMap.values()) {
     for (const mem of user.memberships) {
       mem.lawFirmName = firmNames.get(mem.lawFirmId) ?? "Escritório";
+      mem.plan = (firms ?? []).find((f) => f.id === mem.lawFirmId)?.plan ?? "starter";
     }
   }
 
@@ -320,7 +324,7 @@ export async function getAdminUserDetail(
 
   const first = memberships[0];
   const firmIds = [...new Set(memberships.map((m) => m.law_firm_id))];
-  const { data: firms } = await adminClient.from("law_firms").select("id, name").in("id", firmIds);
+  const { data: firms } = await adminClient.from("law_firms").select("id, name, plan").in("id", firmIds);
   const firmNames = new Map((firms ?? []).map((f) => [f.id, f.name]));
 
   return {
@@ -335,6 +339,7 @@ export async function getAdminUserDetail(
       lawFirmName: firmNames.get(m.law_firm_id) ?? "Escritório",
       role: m.role,
       status: m.status,
+      plan: (firms ?? []).find((f) => f.id === m.law_firm_id)?.plan ?? "starter",
     })),
   };
 }

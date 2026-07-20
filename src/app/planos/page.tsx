@@ -1,27 +1,37 @@
 import { Check, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { PlanRecommender } from "@/components/plan-recommender";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 const plans = [
   {
     name: "Starter",
+    id: "starter",
     description: "Para escritórios que querem organizar a operação desde o primeiro dia.",
     features: ["Clientes e leads", "Processos e prazos", "Agenda e tarefas", "Documentos seguros"],
   },
   {
     name: "Professional",
+    id: "professional",
     description: "Para equipes que precisam conectar operação, financeiro e produtividade.",
     features: ["Tudo do Starter", "Contratos e recebimentos", "Relatórios gerenciais", "Gestão de equipe e permissões"],
     featured: true,
   },
   {
     name: "Business",
+    id: "business",
     description: "Para operações jurídicas maiores, com mais controle e escala.",
     features: ["Tudo do Professional", "Múltiplos escritórios", "Governança e auditoria", "Atendimento prioritário"],
   },
 ];
 
-export default function PlansPage() {
+export default async function PlansPage() {
+  const supabase = await getSupabaseServerClient();
+  const { data: configuredPlans } = supabase ? await (supabase as any).from("plan_settings").select("id,name,description,price_cents").eq("active", true) : { data: [] };
+  const displayPlans = plans.map((plan) => {
+    const configured = (configuredPlans ?? []).find((item: { id: string }) => item.id === plan.id);
+    return { ...plan, name: configured?.name ?? plan.name, description: configured?.description || plan.description, priceCents: configured?.price_cents ?? 0 };
+  });
   return (
     <main className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
@@ -36,11 +46,12 @@ export default function PlansPage() {
         </div>
         <PlanRecommender />
         <div className="grid gap-5 lg:grid-cols-3">
-          {plans.map((plan) => (
+          {displayPlans.map((plan) => (
             <article key={plan.name} className={`relative flex flex-col rounded-2xl border p-7 ${plan.featured ? "border-primary bg-primary/[0.04] shadow-lg shadow-primary/10" : "border-border/60 bg-card"}`}>
               {plan.featured ? <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">Mais escolhido</span> : null}
               <h2 className="text-xl font-bold">{plan.name}</h2>
               <p className="mt-3 min-h-12 text-sm leading-relaxed text-muted-foreground">{plan.description}</p>
+              <p className="mt-5 text-2xl font-bold">{plan.priceCents > 0 ? `R$ ${(plan.priceCents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês` : "Grátis"}</p>
               <div className="mt-7 border-t border-border/60 pt-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Inclui</p>
                 <ul className="mt-4 space-y-3 text-sm">
