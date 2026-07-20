@@ -40,7 +40,7 @@ export function extractPlaceholders(template: string): string[] {
 
   while ((match = PLACEHOLDER_REGEX.exec(template)) !== null) {
     const raw = match[1].trim();
-    const name = raw.split("|")[0].trim().split(".")[0].trim();
+    const name = raw.split("|")[0].trim();
     if (!placeholders.includes(name)) {
       placeholders.push(name);
     }
@@ -56,7 +56,7 @@ export function extractAllPlaceholders(template: string): Array<{ full: string; 
   while ((match = PLACEHOLDER_REGEX.exec(template)) !== null) {
     const raw = match[1].trim();
     const parts = raw.split("|").map((p) => p.trim());
-    const name = parts[0].split(".")[0].trim();
+    const name = parts[0].trim();
     const filters = parts.slice(1);
     results.push({ full: match[0], name, filters });
   }
@@ -72,6 +72,11 @@ export function resolveVariable(
   path: string,
   context: TemplateContext,
 ): string | null {
+  const direct = context[path];
+  if (direct !== null && direct !== undefined && typeof direct !== "object") {
+    return String(direct);
+  }
+
   const keys = path.split(".");
   let current: unknown = context;
 

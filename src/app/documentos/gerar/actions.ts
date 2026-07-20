@@ -1,9 +1,13 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { can } from "@/lib/auth/permissions";
 import { requireAppContext } from "@/lib/auth/require-app-context";
+import { extractPlaceholders, renderTemplate } from "@/lib/documents/template-engine";
+import { systemDocumentTemplates } from "@/lib/documents/system-templates";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivityEvent } from "@/lib/timeline/queries";
 
@@ -16,6 +20,41 @@ export type GeneratedDocument = {
   createdAt: string;
 };
 
+type DocumentTemplateRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  content: string;
+  created_at: string;
+};
+
+type LegalCaseRow = {
+  title: string | null;
+  case_number: string | null;
+  case_kind: string | null;
+  court: string | null;
+  district: string | null;
+  state: string | null;
+  opposing_party: string | null;
+  opposing_lawyer: string | null;
+};
+
+type TemplateSelectBuilder<T> = {
+  eq(column: string, value: string): TemplateSelectBuilder<T>;
+  is(column: string, value: null): TemplateSelectBuilder<T>;
+  order(column: string): Promise<{ data: T[] | null; error: Error | null }>;
+  maybeSingle(): Promise<{ data: T | null; error: Error | null }>;
+};
+
+type TemplateTableClient = {
+  select(columns: string): TemplateSelectBuilder<DocumentTemplateRow>;
+};
+
+function documentTemplatesTable(supabase: unknown): TemplateTableClient {
+  return (supabase as { from(table: "document_templates"): TemplateTableClient }).from("document_templates");
+}
+
 // Buscar templates disponíveis para geração
 export async function getTemplatesForGeneration() {
   const context = await requireAppContext();
@@ -24,27 +63,37 @@ export async function getTemplatesForGeneration() {
   const supabase = await getSupabaseServerClient();
   if (!supabase) throw new Error("Erro ao conectar");
 
-  const { data, error } = await supabase
-    .from("documents")
-    .select("id, name, mime_type, size_bytes, entity_type, entity_id, created_at, uploaded_by")
+  const { data, error } = await documentTemplatesTable(supabase)
+    .select("id, name, description, category, content, created_at")
     .eq("law_firm_id", context.lawFirm.id)
-    .eq("entity_type", "modelo")
+    .is("archived_at", null)
     .order("name");
 
   if (error) throw error;
 
-  return (data ?? []).map((d: any) => {
-    // Buscar metadata do template
-    const meta = d as any;
-    return {
-      id: d.id,
-      name: d.name,
-      description: meta.description ?? null,
-      category: meta.category ?? "geral",
-      variables: [] as string[],
-      createdAt: d.created_at,
-    };
-  });
+  const systemTemplates = systemDocumentTemplates.map((template) => ({
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    category: template.category,
+    content: template.content,
+    variables: extractPlaceholders(template.content),
+    isSystem: true,
+    createdAt: "",
+  }));
+
+  const officeTemplates = (data ?? []).map((template) => ({
+    id: template.id,
+    name: template.name,
+    description: template.description ?? null,
+    category: template.category ?? "geral",
+    content: template.content,
+    variables: extractPlaceholders(template.content),
+    isSystem: false,
+    createdAt: template.created_at,
+  }));
+
+  return [...systemTemplates, ...officeTemplates];
 }
 
 // Buscar entidade para preenchimento automático
@@ -80,7 +129,7 @@ export async function getEntityData(entityType: string, entityId: string): Promi
       .single();
 
     if (caseData) {
-      const c = caseData as any;
+      const c = caseData as LegalCaseRow;
       contextData["case.title"] = c.title ?? "";
       contextData["case.number"] = c.case_number ?? "";
       contextData["case.kind"] = c.case_kind ?? "";
@@ -115,7 +164,7 @@ export async function getEntityData(entityType: string, entityId: string): Promi
 
 // Gerar documento a partir de template
 const generateSchema = z.object({
-  templateId: z.string().uuid(),
+  templateId: z.string().min(1),
   name: z.string().min(1, "Nome é obrigatório"),
   content: z.string().min(1, "Conteúdo é obrigatório"),
   entityType: z.string().optional(),
@@ -131,19 +180,31 @@ export async function generateDocument(data: z.infer<typeof generateSchema>): Pr
   const supabase = await getSupabaseServerClient();
   if (!supabase) throw new Error("Erro ao conectar");
 
+  const fileName = `${parsed.name.replace(/[^a-zA-Z0-9._-]/g, "_") || "documento"}.txt`;
+  const storagePath = `${context.lawFirm.id}/generated/${randomUUID()}-${fileName}`;
+  const file = new Blob([parsed.content], { type: "text/plain;charset=utf-8" });
+  const { error: uploadError } = await supabase.storage
+    .from("documents")
+    .upload(storagePath, file, {
+      contentType: "text/plain;charset=utf-8",
+      upsert: false,
+    });
+
+  if (uploadError) throw uploadError;
+
   // Salvar documento gerado
   const { data: doc, error } = await supabase
     .from("documents")
     .insert({
       law_firm_id: context.lawFirm.id,
       name: parsed.name,
-      mime_type: "text/plain",
+      mime_type: "text/plain;charset=utf-8",
       size_bytes: new TextEncoder().encode(parsed.content).length,
-      storage_path: `generated/${crypto.randomUUID()}.txt`,
+      storage_path: storagePath,
       entity_type: parsed.entityType ?? "documento_gerado",
       entity_id: parsed.entityId ?? null,
       uploaded_by: context.member.id,
-    } as any)
+    })
     .select("id, name, created_at")
     .single();
 
@@ -165,6 +226,9 @@ export async function generateDocument(data: z.infer<typeof generateSchema>): Pr
     console.error("[documentos/gerar] falha ao registrar activity_events:", err);
   }
 
+  revalidatePath("/documentos");
+  revalidatePath("/documentos/gerar");
+
   return {
     id: doc.id,
     name: doc.name,
@@ -173,4 +237,25 @@ export async function generateDocument(data: z.infer<typeof generateSchema>): Pr
     entityId: parsed.entityId ?? null,
     createdAt: doc.created_at,
   };
+}
+
+export async function renderDocumentTemplate(templateId: string, values: Record<string, string>) {
+  const context = await requireAppContext();
+  if (!can(context.member.role, "processos.visualizar")) throw new Error("Sem permissão");
+
+  let content = systemDocumentTemplates.find((template) => template.id === templateId)?.content;
+  if (!content) {
+    const supabase = await getSupabaseServerClient();
+    if (!supabase) throw new Error("Erro ao conectar");
+    const { data, error } = await documentTemplatesTable(supabase)
+      .select("content")
+      .eq("id", templateId)
+      .eq("law_firm_id", context.lawFirm.id)
+      .is("archived_at", null)
+      .maybeSingle();
+    if (error || !data) throw new Error("Modelo não encontrado");
+    content = data.content;
+  }
+
+  return renderTemplate(content ?? "", values);
 }

@@ -14,12 +14,12 @@ describe("Template engine – placeholder extraction", () => {
   it("extracts simple placeholders", () => {
     const template = "Olá {{client.name}}, seu processo é {{case.number}}.";
     const placeholders = extractPlaceholders(template);
-    expect(placeholders).toEqual(["client", "case"]);
+    expect(placeholders).toEqual(["client.name", "case.number"]);
   });
 
   it("deduplicates placeholders", () => {
     const template = "{{client.name}} e {{client.email}}";
-    expect(extractPlaceholders(template)).toEqual(["client"]);
+    expect(extractPlaceholders(template)).toEqual(["client.name", "client.email"]);
   });
 
   it("returns empty for template without placeholders", () => {
@@ -50,6 +50,10 @@ describe("Template engine – variable resolution", () => {
 
   it("resolves nested variable", () => {
     expect(resolveVariable("client.name", context)).toBe("Maria");
+  });
+
+  it("resolves flat dotted variable", () => {
+    expect(resolveVariable("client.name", { "client.name": "Ana" })).toBe("Ana");
   });
 
   it("returns null for missing variable", () => {

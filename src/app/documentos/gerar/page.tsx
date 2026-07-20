@@ -9,9 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { getErrorMessage } from "@/lib/utils";
-import { getTemplatesForGeneration, getEntityData, generateDocument } from "./actions";
+import { generateDocument, getEntityData, getTemplatesForGeneration, renderDocumentTemplate } from "./actions";
 
-type Template = { id: string; name: string; description: string | null; category: string };
+type Template = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  content: string;
+  variables: string[];
+  isSystem: boolean;
+};
 
 export default function GerarDocumentoPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -44,36 +52,48 @@ export default function GerarDocumentoPage() {
   }, []);
 
   const handleSelectTemplate = useCallback((template: Template) => {
+    const initialVariables = Object.fromEntries(template.variables.map((variable) => [variable, ""]));
     setSelectedTemplate(template);
     setDocName(template.name);
-    setPreview(null);
+    setPreview(template.content);
     setGenerated(null);
-    setVariables({});
+    setVariables(initialVariables);
   }, []);
+
+  const handlePreview = useCallback(async (template = selectedTemplate, nextVariables = variables) => {
+    if (!template) return;
+    try {
+      setError(null);
+      const rendered = await renderDocumentTemplate(template.id, nextVariables);
+      setPreview(rendered);
+    } catch (e: unknown) {
+      setError(getErrorMessage(e));
+    }
+  }, [selectedTemplate, variables]);
 
   const handleLoadEntityData = useCallback(async () => {
     if (!entityType || !entityId) return;
     try {
       const data = await getEntityData(entityType, entityId);
-      setVariables((prev) => ({ ...prev, ...data }));
+      const nextVariables = { ...variables, ...data };
+      setVariables(nextVariables);
+      await handlePreview(selectedTemplate, nextVariables);
     } catch (e: unknown) {
       setError(getErrorMessage(e));
     }
-  }, [entityType, entityId]);
+  }, [entityType, entityId, handlePreview, selectedTemplate, variables]);
 
   const handleGenerate = useCallback(() => {
     if (!selectedTemplate) return;
     startTransition(async () => {
       try {
         setError(null);
-        // Renderizar template com variáveis
+        const rendered = await renderDocumentTemplate(selectedTemplate.id, variables);
+        setPreview(rendered);
         const result = await generateDocument({
           templateId: selectedTemplate.id,
           name: docName || selectedTemplate.name,
-          content: Object.entries(variables).reduce(
-            (text, [key, value]) => text.replace(new RegExp(`\\{\\{${key.replace(".", "\\.")}\\}\\}`, "g"), value),
-            `Documento gerado a partir do template: ${selectedTemplate.name}\n\n[Conteúdo do template será renderizado no servidor]`
-          ),
+          content: rendered,
           entityType: entityType || undefined,
           entityId: entityId || undefined,
         });
@@ -113,7 +133,7 @@ export default function GerarDocumentoPage() {
 
       {generated && (
         <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-          Documento "{generated.name}" gerado com sucesso!
+          Documento &quot;{generated.name}&quot; gerado com sucesso!
           <a href={`/documentos`} className="ml-2 underline">Ver documentos</a>
         </div>
       )}
@@ -143,6 +163,7 @@ export default function GerarDocumentoPage() {
                   <div>
                     <span className="font-medium">{t.name}</span>
                     <span className="ml-2 rounded bg-muted px-1 text-xs">{t.category}</span>
+                    {t.isSystem ? <span className="ml-2 rounded bg-secondary px-1 text-xs">sistema</span> : null}
                   </div>
                 </button>
               ))}
@@ -214,11 +235,26 @@ export default function GerarDocumentoPage() {
                 <AddVariableForm onAdd={(key, value) => setVariables((prev) => ({ ...prev, [key]: value }))} />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={() => handlePreview()} disabled={isPending}>
+                  Atualizar preview
+                </Button>
                 <Button onClick={handleGenerate} disabled={isPending || !docName.trim()}>
                   {isPending ? "Gerando..." : "Gerar Documento"}
                 </Button>
+                <Button type="button" variant="outline" onClick={handleDownload} disabled={!preview}>
+                  Baixar TXT
+                </Button>
               </div>
+            </div>
+          )}
+
+          {selectedTemplate && (
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <Label className="text-xs font-medium">Preview</Label>
+              <pre className="mt-2 max-h-96 overflow-y-auto rounded border bg-background p-3 text-xs whitespace-pre-wrap">
+                {preview || "Atualize o preview para ver o documento renderizado."}
+              </pre>
             </div>
           )}
         </div>
