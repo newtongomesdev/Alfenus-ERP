@@ -27,6 +27,7 @@ export type AppLawFirm = {
   plan: string;
   status: string;
   createdAt: string;
+  settings?: Record<string, any>;
 };
 
 export type AppContext = {
@@ -54,7 +55,7 @@ export async function getAppContext(): Promise<AppContext> {
     return { status: "signed-out", member: null, lawFirm: null };
   }
 
-  const memberSelect = "id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, logo_path, plan, status, created_at)";
+  const memberSelect = "id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, logo_path, plan, status, created_at, settings)";
   let { data, error } = await supabase
     .from("law_firm_members")
     .select(memberSelect)
@@ -69,7 +70,7 @@ export async function getAppContext(): Promise<AppContext> {
     console.error("[auth/context] consulta completa falhou; tentando compatibilidade", { error: String(error) });
     const fallback = await supabase
       .from("law_firm_members")
-      .select("id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, plan, status, created_at)")
+      .select("id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, plan, status, created_at, settings)")
       .eq("user_id", user.id)
       .eq("status", "ativo")
       .limit(1)
@@ -104,6 +105,7 @@ export async function getAppContext(): Promise<AppContext> {
       plan: string;
       status: string;
       created_at: string;
+      settings?: any;
     } | null;
   };
 
@@ -135,6 +137,7 @@ export async function getAppContext(): Promise<AppContext> {
       plan: row.law_firms.plan,
       status: row.law_firms.status,
       createdAt: row.law_firms.created_at,
+      settings: row.law_firms.settings,
     },
   };
 }

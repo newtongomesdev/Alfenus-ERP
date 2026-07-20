@@ -69,6 +69,14 @@ export async function updateBioLinkAction(formData: FormData) {
   const showPhone = formData.get("showPhone") === "on";
   const showAddress = formData.get("showAddress") === "on";
   const showTeam = formData.get("showTeam") === "on";
+  const showPortal = formData.get("showPortal") === "on";
+
+  const backgroundColor = String(formData.get("backgroundColor") ?? "#f8fafc");
+  const textColor = String(formData.get("textColor") ?? "#0f172a");
+  const buttonColor = String(formData.get("buttonColor") ?? "#ffffff");
+  const buttonTextColor = String(formData.get("buttonTextColor") ?? "#0f172a");
+  const buttonStyle = String(formData.get("buttonStyle") ?? "solid");
+  const buttonShape = String(formData.get("buttonShape") ?? "rounded");
   
   const customLinksStr = String(formData.get("customLinks") ?? "[]");
   let customLinks = [];
@@ -92,7 +100,16 @@ export async function updateBioLinkAction(formData: FormData) {
           show_phone: showPhone,
           show_address: showAddress,
           show_team: showTeam,
-          custom_links: customLinks
+          show_portal: showPortal,
+          custom_links: customLinks,
+          theme: {
+            backgroundColor,
+            textColor,
+            buttonColor,
+            buttonTextColor,
+            buttonStyle,
+            buttonShape
+          }
         }
       }
     } as Record<string, unknown>)

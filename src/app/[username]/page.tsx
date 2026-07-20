@@ -82,10 +82,43 @@ export default async function LawFirmBioPage({
   const showPhone = bioLinkSettings.show_phone ?? true;
   const showAddress = bioLinkSettings.show_address ?? true;
   const showTeam = bioLinkSettings.show_team ?? true;
+  const showPortal = bioLinkSettings.show_portal ?? true;
   const customLinks = bioLinkSettings.custom_links || [];
+  
+  const theme = bioLinkSettings.theme || {};
+  const bgColor = theme.backgroundColor || "#f8fafc";
+  const textColor = theme.textColor || "#0f172a";
+  const btnColor = theme.buttonColor || "#ffffff";
+  const btnTextColor = theme.buttonTextColor || "#0f172a";
+  const btnStyle = theme.buttonStyle || "solid";
+  const btnShape = theme.buttonShape || "rounded";
+  
+  const getBorderRadius = () => {
+    if (btnShape === "square") return "0px";
+    if (btnShape === "pill") return "9999px";
+    return "0.75rem"; // rounded-xl
+  };
+  
+  const getButtonStyle = () => {
+    const base = { borderRadius: getBorderRadius() };
+    if (btnStyle === "outline") {
+      return {
+        ...base,
+        backgroundColor: "transparent",
+        color: btnTextColor,
+        border: `1px solid ${btnTextColor}`
+      };
+    }
+    return {
+      ...base,
+      backgroundColor: btnColor,
+      color: btnTextColor,
+      border: `1px solid ${btnColor}`
+    };
+  };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-between pb-8">
+    <main className="min-h-screen flex flex-col items-center justify-between pb-8" style={{ backgroundColor: bgColor, color: textColor }}>
       <div className="w-full max-w-md px-6 pt-16 pb-12 flex flex-col items-center flex-grow">
         {/* Logo & Nome do Escritório */}
         <div className="flex flex-col items-center text-center mb-8">
@@ -96,12 +129,12 @@ export default async function LawFirmBioPage({
               className="h-20 w-20 rounded-2xl object-contain border bg-white p-2 shadow-sm mb-4"
             />
           ) : (
-            <div className="h-20 w-20 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-md mb-4">
+            <div className="h-20 w-20 rounded-2xl flex items-center justify-center shadow-md mb-4" style={{ backgroundColor: btnColor, color: btnTextColor }}>
               <Scale className="h-10 w-10" />
             </div>
           )}
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">{firm.name}</h1>
-          <p className="text-sm text-slate-500 mt-1.5 font-medium">Advocacia e Assessoria Jurídica</p>
+          <h1 className="text-xl font-bold tracking-tight" style={{ color: textColor }}>{firm.name}</h1>
+          <p className="text-sm mt-1.5 font-medium opacity-80">Advocacia e Assessoria Jurídica</p>
         </div>
 
         {/* Links Principais */}
@@ -111,7 +144,8 @@ export default async function LawFirmBioPage({
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
+              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
+              style={{ borderRadius: getBorderRadius() }}
             >
               <MessageSquare className="h-5 w-5 shrink-0" />
               <span className="flex-grow text-left">Fale conosco no WhatsApp</span>
@@ -122,9 +156,10 @@ export default async function LawFirmBioPage({
           {showEmail && firm.email && (
             <a
               href={`mailto:${firm.email}`}
-              className="w-full h-12 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
+              className="w-full h-12 font-semibold shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm hover:opacity-90"
+              style={getButtonStyle()}
             >
-              <Mail className="h-5 w-5 shrink-0 text-slate-400" />
+              <Mail className="h-5 w-5 shrink-0 opacity-70" />
               <span className="flex-grow text-left">Enviar E-mail</span>
               <ChevronRight className="h-4 w-4 opacity-50 shrink-0" />
             </a>
@@ -133,9 +168,10 @@ export default async function LawFirmBioPage({
           {showPhone && firm.phone && (
             <a
               href={`tel:${firm.phone.replace(/\D/g, "")}`}
-              className="w-full h-12 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
+              className="w-full h-12 font-semibold shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm hover:opacity-90"
+              style={getButtonStyle()}
             >
-              <Phone className="h-5 w-5 shrink-0 text-slate-400" />
+              <Phone className="h-5 w-5 shrink-0 opacity-70" />
               <span className="flex-grow text-left">Ligar para o escritório</span>
               <ChevronRight className="h-4 w-4 opacity-50 shrink-0" />
             </a>
@@ -146,9 +182,10 @@ export default async function LawFirmBioPage({
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full h-12 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
+              className="w-full h-12 font-semibold shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm hover:opacity-90"
+              style={getButtonStyle()}
             >
-              <MapPin className="h-5 w-5 shrink-0 text-slate-400" />
+              <MapPin className="h-5 w-5 shrink-0 opacity-70" />
               <span className="flex-grow text-left truncate">Como chegar (Endereço)</span>
               <ChevronRight className="h-4 w-4 opacity-50 shrink-0" />
             </a>
@@ -160,7 +197,8 @@ export default async function LawFirmBioPage({
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
+              className="w-full h-12 font-semibold shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm hover:opacity-90"
+              style={getButtonStyle()}
             >
               <span className="flex-grow text-center">{link.title}</span>
             </a>
@@ -203,25 +241,27 @@ export default async function LawFirmBioPage({
         )}
 
         {/* Informações de Acompanhamento */}
-        <Card className="w-full rounded-xl border border-slate-200/50 shadow-xs bg-white">
-          <CardHeader className="p-4 flex flex-row items-center gap-3 space-y-0 border-b border-slate-100">
-            <div className="h-8 w-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-              <FileText className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className="text-sm font-semibold">Portal do Cliente</CardTitle>
-              <CardDescription className="text-xs">Acompanhamento online do seu caso</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 text-xs text-slate-500 leading-relaxed">
-            Se você já é nosso cliente, solicite o seu link temporário de acesso seguro para acompanhar andamentos, prazos e nos enviar documentos de forma prática e direta.
-          </CardContent>
-        </Card>
+        {showPortal && (
+          <Card className="w-full border shadow-xs" style={{ borderRadius: getBorderRadius(), backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(0,0,0,0.1)' }}>
+            <CardHeader className="p-4 flex flex-row items-center gap-3 space-y-0 border-b border-black/5">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(0,0,0,0.05)', color: textColor }}>
+                <FileText className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-semibold" style={{ color: textColor }}>Portal do Cliente</CardTitle>
+                <CardDescription className="text-xs" style={{ color: textColor, opacity: 0.7 }}>Acompanhamento online do seu caso</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 text-xs leading-relaxed" style={{ color: textColor, opacity: 0.8 }}>
+              Se você já é nosso cliente, solicite o seu link temporário de acesso seguro para acompanhar andamentos, prazos e nos enviar documentos de forma prática e direta.
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Footer */}
-      <footer className="text-center text-[10px] text-slate-400 font-medium tracking-wide">
-        Desenvolvido com <span className="font-semibold text-slate-600">Alfenus ERP</span>
+      <footer className="text-center text-[10px] font-medium tracking-wide opacity-50" style={{ color: textColor }}>
+        Desenvolvido com <span className="font-semibold" style={{ color: textColor }}>Alfenus ERP</span>
       </footer>
     </main>
   );

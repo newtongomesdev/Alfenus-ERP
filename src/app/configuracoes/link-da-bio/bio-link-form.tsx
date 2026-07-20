@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Link2, Plus, Trash, ExternalLink, Save, ArrowLeft } from "lucide-react";
+import { useFormStatus } from "react-dom";
+import { Link2, Plus, Trash, ExternalLink, Save, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { updateBioLinkAction } from "./actions";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" className="font-semibold shadow-md" disabled={pending}>
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+      {pending ? "Salvando..." : "Salvar Configurações"}
+    </Button>
+  );
+}
 
 interface CustomLink {
   title: string;
@@ -24,6 +36,15 @@ export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
   const [showPhone, setShowPhone] = useState(bioLinkSettings.show_phone ?? true);
   const [showAddress, setShowAddress] = useState(bioLinkSettings.show_address ?? true);
   const [showTeam, setShowTeam] = useState(bioLinkSettings.show_team ?? true);
+  const [showPortal, setShowPortal] = useState(bioLinkSettings.show_portal ?? true);
+  
+  const theme = bioLinkSettings.theme || {};
+  const [backgroundColor, setBackgroundColor] = useState(theme.backgroundColor || "#f8fafc");
+  const [textColor, setTextColor] = useState(theme.textColor || "#0f172a");
+  const [buttonColor, setButtonColor] = useState(theme.buttonColor || "#ffffff");
+  const [buttonTextColor, setButtonTextColor] = useState(theme.buttonTextColor || "#0f172a");
+  const [buttonStyle, setButtonStyle] = useState(theme.buttonStyle || "solid");
+  const [buttonShape, setButtonShape] = useState(theme.buttonShape || "rounded");
   
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(bioLinkSettings.custom_links || []);
   
@@ -112,6 +133,86 @@ export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
               </div>
               <Switch id="showTeam" name="showTeam" checked={showTeam} onCheckedChange={setShowTeam} />
             </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="showPortal">Portal do Cliente</Label>
+                <p className="text-xs text-muted-foreground">Card com explicação sobre o acesso ao Portal do Cliente.</p>
+              </div>
+              <Switch id="showPortal" name="showPortal" checked={showPortal} onCheckedChange={setShowPortal} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-lg">
+        <CardHeader>
+          <CardTitle>Aparência</CardTitle>
+          <CardDescription>Personalize as cores e o formato dos botões do seu Link da Bio.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="backgroundColor" className="text-sm">Cor de Fundo da Página</Label>
+              <div className="flex gap-2 items-center">
+                <input type="color" id="backgroundColor" name="backgroundColor" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded bg-transparent p-1" />
+                <Input value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="font-mono" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="textColor" className="text-sm">Cor do Texto Principal</Label>
+              <div className="flex gap-2 items-center">
+                <input type="color" id="textColor" name="textColor" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded bg-transparent p-1" />
+                <Input value={textColor} onChange={(e) => setTextColor(e.target.value)} className="font-mono" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="buttonColor" className="text-sm">Cor do Botão Secundário</Label>
+              <div className="flex gap-2 items-center">
+                <input type="color" id="buttonColor" name="buttonColor" value={buttonColor} onChange={(e) => setButtonColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded bg-transparent p-1" />
+                <Input value={buttonColor} onChange={(e) => setButtonColor(e.target.value)} className="font-mono" />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Usada nos links como E-mail, Telefone e Endereço.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="buttonTextColor" className="text-sm">Cor do Texto do Botão Secundário</Label>
+              <div className="flex gap-2 items-center">
+                <input type="color" id="buttonTextColor" name="buttonTextColor" value={buttonTextColor} onChange={(e) => setButtonTextColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded bg-transparent p-1" />
+                <Input value={buttonTextColor} onChange={(e) => setButtonTextColor(e.target.value)} className="font-mono" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="buttonShape" className="text-sm">Formato dos Botões</Label>
+              <select 
+                id="buttonShape" 
+                name="buttonShape" 
+                value={buttonShape} 
+                onChange={(e) => setButtonShape(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="square">Quadrado (Sem arredondamento)</option>
+                <option value="rounded">Arredondado (Padrão)</option>
+                <option value="pill">Pílula (Totalmente arredondado)</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="buttonStyle" className="text-sm">Estilo dos Botões Secundários</Label>
+              <select 
+                id="buttonStyle" 
+                name="buttonStyle" 
+                value={buttonStyle} 
+                onChange={(e) => setButtonStyle(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="solid">Sólido (Fundo preenchido)</option>
+                <option value="outline">Contorno (Fundo transparente com borda)</option>
+              </select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -176,6 +277,12 @@ export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
             </div>
           )}
           <input type="hidden" name="customLinks" value={JSON.stringify(customLinks)} />
+          <input type="hidden" name="showPortal" value={showPortal ? "on" : "off"} />
+          <input type="hidden" name="showWhatsapp" value={showWhatsapp ? "on" : "off"} />
+          <input type="hidden" name="showEmail" value={showEmail ? "on" : "off"} />
+          <input type="hidden" name="showPhone" value={showPhone ? "on" : "off"} />
+          <input type="hidden" name="showAddress" value={showAddress ? "on" : "off"} />
+          <input type="hidden" name="showTeam" value={showTeam ? "on" : "off"} />
         </CardContent>
       </Card>
 
@@ -186,10 +293,7 @@ export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
             Voltar
           </Button>
         </Link>
-        <Button type="submit" className="font-semibold shadow-md">
-          <Save className="mr-2 size-4" />
-          Salvar Configurações
-        </Button>
+        <SubmitButton />
       </div>
     </form>
   );
