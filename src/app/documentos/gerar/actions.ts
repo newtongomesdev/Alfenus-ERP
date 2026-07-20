@@ -278,6 +278,17 @@ export async function renderDocumentTemplate(templateId: string, values: Record<
   return renderTemplate(content ?? "", values);
 }
 
+export async function getFirmContextAction() {
+  const context = await requireAppContext();
+  return {
+    name: context.lawFirm.name,
+    document: context.lawFirm.document ?? null,
+    email: context.lawFirm.email ?? null,
+    phone: context.lawFirm.phone ?? null,
+    logoPath: context.lawFirm.logoPath ?? null,
+  };
+}
+
 export async function enhanceDocumentWithAi(input: {
   content: string;
   instruction: "formalize" | "fix_grammar" | "summarize" | "expand";

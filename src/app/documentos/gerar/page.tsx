@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { getErrorMessage } from "@/lib/utils";
-import { enhanceDocumentWithAi, generateDocument, getEntityData, getTemplatesForGeneration, renderDocumentTemplate } from "./actions";
+import { enhanceDocumentWithAi, generateDocument, getEntityData, getFirmContextAction, getTemplatesForGeneration, renderDocumentTemplate } from "./actions";
 
 type Template = {
   id: string;
@@ -153,6 +153,7 @@ export default function GerarDocumentoPage() {
   const [generated, setGenerated] = useState<{ id: string; name: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [isMono, setIsMono] = useState(true);
+  const [firm, setFirm] = useState<{ name: string; document: string | null; email: string | null; phone: string | null } | null>(null);
 
   const handleCopyClipboard = useCallback(() => {
     if (!preview) return;
@@ -165,8 +166,12 @@ export default function GerarDocumentoPage() {
     const load = async () => {
       try {
         setLoading(true);
-        const data = await getTemplatesForGeneration();
+        const [data, firmData] = await Promise.all([
+          getTemplatesForGeneration(),
+          getFirmContextAction(),
+        ]);
         setTemplates(data);
+        setFirm(firmData);
       } catch (e: unknown) {
         setError(getErrorMessage(e));
       } finally {
@@ -476,21 +481,64 @@ export default function GerarDocumentoPage() {
                 </div>
               </div>
 
-              {/* Textarea editável estilo página de folha branca */}
-              <div className="relative rounded-lg border bg-slate-50 dark:bg-zinc-900/40 p-2.5">
-                <textarea
-                  value={preview ?? ""}
-                  onChange={(e) => setPreview(e.target.value)}
-                  rows={20}
-                  className={`w-full min-h-[380px] rounded-md border border-input/60 bg-background p-4 text-xs leading-relaxed text-foreground shadow-inner outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 ${
-                    isMono ? "font-mono" : "font-sans"
-                  }`}
-                  placeholder="Selecione um template ou clique em 'Atualizar das Variáveis' para visualizar e editar o documento..."
-                />
-                <div className="mt-1.5 flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
-                  <span>{preview ? preview.trim().split(/\s+/).filter(Boolean).length : 0} palavras</span>
-                  <span>•</span>
-                  <span>{preview?.length || 0} caracteres</span>
+              {/* Textarea editável estilo página de folha branca simulando o PDF final */}
+              <div className="relative rounded-xl border border-muted-foreground/20 bg-slate-100 dark:bg-zinc-950 p-6 flex justify-center">
+                <div className="w-full max-w-[620px] bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 rounded-lg border border-slate-200 shadow-md flex flex-col font-sans overflow-hidden">
+                  
+                  {/* Cabeçalho espelhado do PDF */}
+                  <div className="p-6 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center text-primary font-bold text-xs uppercase">
+                        {firm?.name?.slice(0, 2) || "AL"}
+                      </div>
+                      <div>
+                        <h4 className="text-[11px] font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-tight leading-none">
+                          {firm?.name || "Carregando escritório..."}
+                        </h4>
+                        <p className="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">
+                          {[firm?.document && `CNPJ/CPF: ${firm.document}`, firm?.email, firm?.phone].filter(Boolean).join("  •  ")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded uppercase tracking-wider">
+                      Preview Visual
+                    </div>
+                  </div>
+
+                  {/* Banner do Título espelhado do PDF */}
+                  <div className="px-6 pt-5">
+                    <div className="border-l-4 border-emerald-600 bg-slate-50 dark:bg-zinc-800/40 p-3 rounded-r border border-slate-100 dark:border-zinc-800">
+                      <h3 className="text-xs font-bold text-slate-900 dark:text-zinc-100 tracking-wide uppercase">
+                        {docName || selectedTemplate.name}
+                      </h3>
+                      <p className="text-[8.5px] text-slate-400 dark:text-zinc-500 mt-1">
+                        Documento emitido em {new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" }).format(new Date())}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Corpo do Documento - Textarea invisível estilizada */}
+                  <div className="px-6 py-4 flex-1">
+                    <textarea
+                      value={preview ?? ""}
+                      onChange={(e) => setPreview(e.target.value)}
+                      rows={22}
+                      className={`w-full min-h-[460px] resize-none border-none bg-transparent p-0 text-[11.5px] leading-relaxed text-slate-800 dark:text-zinc-200 outline-none focus:ring-0 focus:outline-none ${
+                        isMono ? "font-mono" : "font-sans"
+                      }`}
+                      placeholder="Comece a digitar o conteúdo do documento..."
+                    />
+                  </div>
+
+                  {/* Rodapé espelhado do PDF */}
+                  <div className="px-6 py-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-[8px] text-slate-400 dark:text-zinc-500 bg-slate-50/50 dark:bg-zinc-800/10">
+                    <span>Documento Gerado via Alfenus ERP Jurídico</span>
+                    <div className="flex items-center gap-4">
+                      <span>{preview ? preview.trim().split(/\s+/).filter(Boolean).length : 0} palavras</span>
+                      <span>Página 1 de 1</span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
