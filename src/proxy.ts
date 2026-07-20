@@ -2,34 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { hasSupabaseEnv } from "@/lib/env";
 
-function getCookie(request: NextRequest, name: string): string | undefined {
-  const cookie = request.cookies.get(name);
-  return cookie?.value;
-}
-
-function getCookieByPrefix(request: NextRequest, prefix: string): string | undefined {
-  for (const [name, cookie] of request.cookies) {
-    if (name.startsWith(prefix)) {
-      return cookie.value;
-    }
-  }
-  return undefined;
-}
-
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const base64Url = parts[1];
-    const padded = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const binary = atob(padded);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes));
-  } catch {
-    return null;
-  }
-}
-
 const protectedRoutes = [
   "/dashboard",
   "/clientes",
@@ -81,17 +53,16 @@ export function proxy(request: NextRequest) {
 
   // Admin route protection
   if (pathname.startsWith("/admin")) {
-    const sessionToken =
-      getCookieByPrefix(request, "sb-") || getCookie(request, "sb-access-token");
-    if (!sessionToken) {
+    const hasSession = request.cookies.getAll().some(
+      ({ name }) => name.startsWith("sb-") && name.includes("-auth-token"),
+    );
+
+    if (!hasSession) {
       return NextResponse.redirect(new URL("/entrar", request.url));
     }
 
-    const payload = decodeJwtPayload(sessionToken);
-    if (!payload || (payload.app_metadata as Record<string, unknown>)?.role !== "superadmin") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-
+    // The server-side admin guard calls auth.getUser(). Do not inspect a
+    // possibly chunked or stale JWT here, especially after role changes.
     return NextResponse.next();
   }
 
