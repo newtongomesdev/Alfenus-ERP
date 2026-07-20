@@ -7,7 +7,7 @@ export async function getTimeEntries(lawFirmId: string) {
   const [entriesResult, clientsResult, casesResult, membersResult] = await Promise.all([
     supabase
       .from("time_entries")
-      .select("id, description, started_at, ended_at, duration_minutes, hourly_rate_cents, billable, status, member_id, client_id, legal_case_id, law_firm_members(name), clients(name), legal_cases(title)")
+      .select("id, description, started_at, ended_at, duration_minutes, hourly_rate_cents, billable, status, member_id, client_id, legal_case_id, law_firm_members!time_entries_member_id_fkey(name), clients(name), legal_cases(title)")
       .eq("law_firm_id", lawFirmId)
       .order("started_at", { ascending: false })
       .limit(100),
