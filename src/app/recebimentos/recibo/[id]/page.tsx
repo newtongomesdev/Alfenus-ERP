@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 
 import { PrintButton } from "@/components/print-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,7 +99,15 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
             <ArrowLeft className="size-4" />
             Voltar para recebimentos
           </Link>
-          <PrintButton />
+          <div className="flex items-center gap-2">
+            {row.paid_at && row.paid_amount_cents > 0 ? (
+              <a href={`/api/recebimentos/${row.id}/recibo.pdf`} className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-border px-2.5 text-sm font-medium transition hover:bg-muted">
+                <Download className="size-4" />
+                Baixar PDF
+              </a>
+            ) : null}
+            <PrintButton />
+          </div>
         </div>
 
         <Card className="rounded-lg print:shadow-none print:border-0">

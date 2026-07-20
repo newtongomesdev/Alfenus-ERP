@@ -11,6 +11,7 @@ export type Database = {
           document: string | null;
           email: string | null;
           phone: string | null;
+          logo_path: string | null;
           address: Json;
           plan: string;
           status: string;
@@ -25,6 +26,7 @@ export type Database = {
           document?: string | null;
           email?: string | null;
           phone?: string | null;
+          logo_path?: string | null;
           address?: Json;
           plan?: string;
           status?: string;
@@ -39,6 +41,7 @@ export type Database = {
           document?: string | null;
           email?: string | null;
           phone?: string | null;
+          logo_path?: string | null;
           address?: Json;
           plan?: string;
           status?: string;

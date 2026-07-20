@@ -23,6 +23,7 @@ export type AppLawFirm = {
   document: string | null;
   email: string | null;
   phone: string | null;
+  logoPath: string | null;
   plan: string;
   status: string;
   createdAt: string;
@@ -55,7 +56,7 @@ export async function getAppContext(): Promise<AppContext> {
 
   const { data, error } = await supabase
     .from("law_firm_members")
-    .select("id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, plan, status, created_at)")
+    .select("id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, logo_path, plan, status, created_at)")
     .eq("user_id", user.id)
     .eq("status", "ativo")
     .limit(1)
@@ -86,6 +87,7 @@ export async function getAppContext(): Promise<AppContext> {
       document: string | null;
       email: string | null;
       phone: string | null;
+      logo_path: string | null;
       plan: string;
       status: string;
       created_at: string;
@@ -116,6 +118,7 @@ export async function getAppContext(): Promise<AppContext> {
       document: row.law_firms.document,
       email: row.law_firms.email,
       phone: row.law_firms.phone,
+      logoPath: row.law_firms.logo_path,
       plan: row.law_firms.plan,
       status: row.law_firms.status,
       createdAt: row.law_firms.created_at,

@@ -23,6 +23,7 @@ import {
 import { can, permissions, roles, type Permission, type Role } from "@/lib/auth/permissions";
 import { getAppContext, getLawFirmMembers } from "@/lib/auth/context";
 import { formatDate, formatDateTime } from "@/lib/formatters";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 const permissionLabels: Record<Permission, string> = {
   "clientes.visualizar": "Ver clientes",
@@ -116,6 +117,7 @@ export default async function SettingsPage({
         validacao: "Revise os campos informados. Nome deve ter pelo menos 2 caracteres.",
         ambiente: "Configure o Supabase antes de salvar.",
         salvar: "Não foi possível salvar. Tente novamente.",
+        logo: "A logo deve ser PNG ou JPG com até 2 MB.",
       }[params.erro]
     : null;
 
@@ -125,6 +127,10 @@ export default async function SettingsPage({
 
   const members = await getLawFirmMembers(context.lawFirm.id);
   const canEdit = can(context.member.role, "configuracoes.administrar");
+  const supabase = await getSupabaseServerClient();
+  const { data: logoUrlData } = context.lawFirm.logoPath && supabase
+    ? await supabase.storage.from("branding").createSignedUrl(context.lawFirm.logoPath, 3600)
+    : { data: null };
 
   return (
     <AppShell memberName={context.member.name}>
@@ -207,6 +213,11 @@ export default async function SettingsPage({
                     <Label htmlFor="document" className="text-xs font-semibold">Documento (CNPJ)</Label>
                     <Input id="document" name="document" defaultValue={context.lawFirm.document ?? ""} placeholder="00.000.000/0001-00" className="h-9 text-sm" />
                   </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="logo" className="text-xs font-semibold">Logo do escritório</Label>
+                    <Input id="logo" name="logo" type="file" accept="image/png,image/jpeg" className="h-9 text-sm" />
+                    <p className="text-xs text-muted-foreground">PNG ou JPG, até 2 MB. Será usada no Alfenus e nos PDFs gerados.</p>
+                  </div>
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground pt-5">Criado em</p>
                     <p className="h-9 flex items-center text-sm">{formatDate(context.lawFirm.createdAt)}</p>
@@ -247,6 +258,10 @@ export default async function SettingsPage({
                   <div>
                     <p className="text-xs text-muted-foreground">Documento</p>
                     <p className="mt-1">{context.lawFirm.document ?? "Não informado"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Logo</p>
+                    {logoUrlData?.signedUrl ? <img src={logoUrlData.signedUrl} alt={`Logo de ${context.lawFirm.name}`} className="mt-1 h-10 max-w-40 object-contain object-left" /> : <p className="mt-1">Não configurada</p>}
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Criado em</p>
