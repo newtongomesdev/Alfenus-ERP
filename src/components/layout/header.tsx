@@ -5,7 +5,7 @@ import { signOutAction } from "@/app/actions";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Header({ memberName, isAuthenticated }: { memberName: string | null; isAuthenticated?: boolean }) {
+export function Header({ memberName, isAuthenticated, logoUrl }: { memberName: string | null; isAuthenticated?: boolean; logoUrl?: string | null }) {
   const initials = memberName
     ? memberName
         .split(" ")
@@ -44,6 +44,7 @@ export function Header({ memberName, isAuthenticated }: { memberName: string | n
               }
             >
               <Avatar className="size-8">
+                {logoUrl && <AvatarImage src={logoUrl} alt={memberName || "Logo"} className="object-cover" />}
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>

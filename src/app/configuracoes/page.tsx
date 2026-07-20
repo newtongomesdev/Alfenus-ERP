@@ -216,7 +216,7 @@ export default async function SettingsPage({
                   </div>
                   <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="logo" className="text-xs font-semibold">Logo do escritório</Label>
-                    <LogoInput />
+                    <LogoInput initialLogoUrl={logoUrlData?.signedUrl} />
                     <p className="text-xs text-muted-foreground">PNG ou JPG, até 2 MB. Será usada no Alfenus e nos PDFs gerados.</p>
                   </div>
                   <div className="space-y-2">
