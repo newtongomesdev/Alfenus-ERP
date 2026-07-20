@@ -40,6 +40,12 @@ function toDateOnly(value: Date) {
 }
 
 function addFrequency(date: Date, frequency: string, index: number) {
+  if (frequency === "semanal") {
+    const next = new Date(date);
+    next.setDate(next.getDate() + index * 7);
+    return next;
+  }
+
   if (frequency === "quinzenal") {
     const next = new Date(date);
     next.setDate(next.getDate() + index * 15);
@@ -48,6 +54,16 @@ function addFrequency(date: Date, frequency: string, index: number) {
 
   if (frequency === "unica") {
     return date;
+  }
+
+  const monthIntervals: Record<string, number> = {
+    bimestral: 2,
+    trimestral: 3,
+    semestral: 6,
+  };
+
+  if (frequency in monthIntervals) {
+    return addMonths(date, index * monthIntervals[frequency]);
   }
 
   return addMonths(date, index);

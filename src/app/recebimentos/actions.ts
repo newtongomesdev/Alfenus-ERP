@@ -160,6 +160,93 @@ export async function registerPaymentAction(formData: FormData) {
   redirect("/recebimentos?registrado=1");
 }
 
+export async function createQuickChargeAction(formData: FormData) {
+  const context = await getAppContext();
+  if (context.status === "missing-env") redirect("/recebimentos/nova?erro=ambiente");
+  if (context.status === "signed-out") redirect("/entrar");
+  if (context.status === "missing-tenant" || !context.member || !context.lawFirm) redirect("/onboarding");
+  if (!can(context.member.role, "contratos.gerenciar")) redirect("/recebimentos/nova?erro=permissao");
+
+  const clientId = String(formData.get("clientId") ?? "");
+  const description = String(formData.get("description") ?? "").trim();
+  const dueDate = String(formData.get("dueDate") ?? "");
+  const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
+  const amountCents = parseCurrencyToCents(formData.get("amount"));
+
+  if (!clientId || description.length < 3 || !dueDate || paymentMethod.length < 2 || amountCents <= 0) {
+    redirect("/recebimentos/nova?erro=validacao");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) redirect("/recebimentos/nova?erro=ambiente");
+
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("law_firm_id", context.lawFirm.id)
+    .eq("id", clientId)
+    .maybeSingle();
+
+  if (!client) redirect("/recebimentos/nova?erro=cliente");
+
+  // A cobrança rápida usa um contrato de parcela única para preservar recibos, estornos e auditoria.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const database = supabase as any;
+  const { data: contract, error: contractError } = await database
+    .from("contracts")
+    .insert({
+      law_firm_id: context.lawFirm.id,
+      client_id: clientId,
+      service_description: description,
+      total_amount_cents: amountCents,
+      upfront_amount_cents: 0,
+      balance_cents: amountCents,
+      has_installments: false,
+      installments_count: 1,
+      first_due_date: dueDate,
+      frequency: "unica",
+      payment_method: paymentMethod,
+      responsible_member_id: context.member.id,
+      status: "ativo",
+      notes: "Cobrança rápida criada em recebimentos.",
+    })
+    .select("id")
+    .single();
+
+  if (contractError || !contract) redirect("/recebimentos/nova?erro=criacao");
+
+  const { error: installmentError } = await database.from("installments").insert({
+    law_firm_id: context.lawFirm.id,
+    contract_id: contract.id,
+    client_id: clientId,
+    number: 1,
+    original_amount_cents: amountCents,
+    final_amount_cents: amountCents,
+    due_date: dueDate,
+    payment_method: paymentMethod,
+    status: "pendente",
+  });
+
+  if (installmentError) {
+    await database.from("contracts").delete().eq("law_firm_id", context.lawFirm.id).eq("id", contract.id);
+    redirect("/recebimentos/nova?erro=criacao");
+  }
+
+  await database.from("audit_logs").insert({
+    law_firm_id: context.lawFirm.id,
+    actor_id: context.member.id,
+    action: "criou_cobranca_rapida",
+    entity_type: "contract",
+    entity_id: contract.id,
+    metadata: { client_id: clientId, amount_cents: amountCents, due_date: dueDate, payment_method: paymentMethod },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/contratos");
+  revalidatePath("/recebimentos");
+  redirect("/recebimentos?cobranca=1");
+}
+
 export async function reverseInstallmentAction(formData: FormData) {
   const context = await getAppContext();
   if (context.status === "signed-out") redirect("/entrar");

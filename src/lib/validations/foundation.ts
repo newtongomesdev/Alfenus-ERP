@@ -93,7 +93,7 @@ export const contractSchema = z
     upfrontAmountCents: z.coerce.number().int().min(0).default(0),
     installmentsCount: z.coerce.number().int().min(1).max(60).default(1),
     firstDueDate: z.string().min(1, "Informe o primeiro vencimento."),
-    frequency: z.enum(["mensal", "quinzenal", "unica"]).default("mensal"),
+    frequency: z.enum(["semanal", "quinzenal", "mensal", "bimestral", "trimestral", "semestral", "unica"]).default("mensal"),
     paymentMethod: z.string().min(2, "Informe a forma de pagamento."),
     status: z.enum(["rascunho", "aguardando_assinatura", "ativo", "quitado", "inadimplente", "cancelado"]).default("ativo"),
     successFee: z.string().optional(),

@@ -171,7 +171,11 @@ export default async function NewContractPage({
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                   >
                     <option value="mensal">Mensal</option>
+                    <option value="semanal">Semanal</option>
                     <option value="quinzenal">Quinzenal</option>
+                    <option value="bimestral">Bimestral</option>
+                    <option value="trimestral">Trimestral</option>
+                    <option value="semestral">Semestral</option>
                     <option value="unica">Única</option>
                   </select>
                 </div>
@@ -185,10 +189,15 @@ export default async function NewContractPage({
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                   >
                     <option value="pix">Pix</option>
+                    <option value="pix_recorrente">Pix recorrente</option>
                     <option value="boleto">Boleto</option>
                     <option value="cartao">Cartão</option>
+                    <option value="link_pagamento">Link de pagamento</option>
                     <option value="transferencia">Transferência</option>
+                    <option value="deposito">Depósito</option>
                     <option value="dinheiro">Dinheiro</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="outro">Outro</option>
                   </select>
                 </div>
 

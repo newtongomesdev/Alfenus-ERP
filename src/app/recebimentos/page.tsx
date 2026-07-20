@@ -24,7 +24,7 @@ function ReceivablesUnavailable({ status }: { status: string }) {
   return <AppShell memberName={null}><div className="space-y-6"><PageHeader title="Recebimentos" description="Acompanhe parcelas, pagamentos e inadimplência." /><Card className="rounded-lg border-dashed"><CardContent className="flex items-center justify-between gap-4 p-6"><p className="text-sm text-muted-foreground">{message}</p>{status !== "missing-env" ? <Link href={href} className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">{status === "missing-tenant" ? "Criar escritório" : "Entrar"}</Link> : null}</CardContent></Card></div></AppShell>;
 }
 
-export default async function ReceivablesPage({ searchParams }: { searchParams: Promise<{ registrado?: string; erro?: string; estornado?: string; duplicado?: string; page?: string; de?: string; ate?: string; status?: string }> }) {
+export default async function ReceivablesPage({ searchParams }: { searchParams: Promise<{ registrado?: string; cobranca?: string; erro?: string; estornado?: string; duplicado?: string; page?: string; de?: string; ate?: string; status?: string }> }) {
   const context = await getAppContext();
   const params = await searchParams;
   const PAGE_SIZE = 20;
@@ -60,8 +60,13 @@ export default async function ReceivablesPage({ searchParams }: { searchParams: 
   const basePath = `/recebimentos?${filterParts.join("&")}`;
 
   return <AppShell memberName={context.member.name}><div className="space-y-6">
-    <PageHeader title="Recebimentos" description="Registre pagamentos e acompanhe o saldo de cada parcela." />
+    <PageHeader
+      title="Recebimentos"
+      description="Registre pagamentos e acompanhe o saldo de cada parcela."
+      actions={<div className="flex gap-2"><Link href="/recebimentos/nova" className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/80">Nova cobrança</Link><Link href="/contratos/novo" className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-2.5 text-sm font-medium hover:bg-muted">Novo contrato</Link></div>}
+    />
     {params.registrado ? <Card className="rounded-lg border-[var(--chart-2)]/30 bg-[var(--chart-2)]/5"><CardContent className="flex items-center gap-2 p-4 text-sm"><CheckCircle2 className="size-4" /> Pagamento registrado e parcela atualizada.</CardContent></Card> : null}
+    {params.cobranca ? <Card className="rounded-lg border-[var(--chart-2)]/30 bg-[var(--chart-2)]/5"><CardContent className="flex items-center gap-2 p-4 text-sm"><CheckCircle2 className="size-4" /> Cobrança criada e pronta para acompanhamento.</CardContent></Card> : null}
     {params.estornado ? <Card className="rounded-lg border-[var(--chart-2)]/30 bg-[var(--chart-2)]/5"><CardContent className="flex items-center gap-2 p-4 text-sm"><CheckCircle2 className="size-4" /> Pagamento estornado com sucesso.</CardContent></Card> : null}
     {params.erro ? <Card className="rounded-lg border-destructive/30 bg-destructive/5"><CardContent className="p-4 text-sm text-destructive">Não foi possível registrar o pagamento. Confira o valor, a permissão e a configuração do Supabase.</CardContent></Card> : null}
     {params.duplicado ? <Card className="rounded-lg border-[var(--chart-3)]/30 bg-[var(--chart-3)]/5"><CardContent className="flex items-center gap-2 p-4 text-sm"><AlertTriangle className="size-4" /> Pagamento duplicado detectado. Já existe um pagamento com o mesmo valor e data para esta parcela.</CardContent></Card> : null}
