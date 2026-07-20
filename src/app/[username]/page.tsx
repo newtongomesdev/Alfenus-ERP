@@ -56,12 +56,15 @@ export default async function LawFirmBioPage({
     .in("role", ["proprietario", "administrador", "advogado"])
     .order("name");
 
-  // Assinar URL da logo se existir
+  // Assinar URL da logo se existir (específica da bio ou fallback do escritório)
   let logoUrl: string | null = null;
-  if (firm.logo_path) {
+  const bioLinkSettings = (firm.settings as any)?.bio_link || {};
+  const logoToSign = bioLinkSettings.logo_path || firm.logo_path;
+
+  if (logoToSign) {
     const { data: signedData } = await admin.storage
       .from("branding")
-      .createSignedUrl(firm.logo_path, 3600);
+      .createSignedUrl(logoToSign, 3600);
     logoUrl = signedData?.signedUrl ?? null;
   }
 

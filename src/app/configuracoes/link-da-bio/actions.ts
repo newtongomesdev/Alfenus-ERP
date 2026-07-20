@@ -5,6 +5,8 @@ import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
+import { randomUUID } from "crypto";
+
 type LawFirmUpdateClient = {
   from(table: "law_firms"): {
     update(values: Record<string, unknown>): {
@@ -87,6 +89,38 @@ export async function updateBioLinkAction(formData: FormData) {
   }
 
   const currentSettings = ((context.lawFirm as any).settings as Record<string, any>) || {};
+  const currentBioLink = currentSettings.bio_link || {};
+
+  // Handle Logo Upload
+  const bioLinkLogo = formData.get("bioLinkLogo");
+  const removeBioLinkLogo = formData.get("removeBioLinkLogo") === "true";
+  let logoPath = currentBioLink.logo_path;
+
+  if (removeBioLinkLogo) {
+    if (logoPath) {
+      await supabase.storage.from("branding").remove([logoPath]);
+    }
+    logoPath = null;
+  } else if (bioLinkLogo instanceof File && bioLinkLogo.size > 0) {
+    const allowedTypes = new Set(["image/png", "image/jpeg"]);
+    if (!allowedTypes.has(bioLinkLogo.type) || bioLinkLogo.size > 2 * 1024 * 1024) {
+      redirect("/configuracoes/link-da-bio?erro=logo");
+    }
+
+    // Delete old custom bio link logo if it exists
+    if (logoPath) {
+      await supabase.storage.from("branding").remove([logoPath]);
+    }
+
+    const extension = bioLinkLogo.type === "image/png" ? "png" : "jpg";
+    logoPath = `${context.lawFirm.id}/bio-link-logo-${randomUUID()}.${extension}`;
+    const { error: logoError } = await supabase.storage.from("branding").upload(logoPath, bioLinkLogo, {
+      contentType: bioLinkLogo.type,
+      cacheControl: "3600",
+      upsert: false,
+    });
+    if (logoError) redirect("/configuracoes/link-da-bio?erro=salvar");
+  }
 
   const { error } = await client
     .from("law_firms")
@@ -95,6 +129,7 @@ export async function updateBioLinkAction(formData: FormData) {
       settings: {
         ...currentSettings,
         bio_link: {
+          logo_path: logoPath,
           show_whatsapp: showWhatsapp,
           show_email: showEmail,
           show_phone: showPhone,

@@ -28,7 +28,17 @@ interface CustomLink {
   url: string;
 }
 
-export function BioLinkForm({ lawFirm, members, logoUrl }: { lawFirm: any, members: any[], logoUrl: string | null }) {
+export function BioLinkForm({ 
+  lawFirm, 
+  members, 
+  logoUrl, 
+  erpLogoUrl 
+}: { 
+  lawFirm: any; 
+  members: any[]; 
+  logoUrl: string | null; 
+  erpLogoUrl: string | null; 
+}) {
   const bioLinkSettings = (lawFirm.settings as any)?.bio_link || {};
   
   const [slug, setSlug] = useState(lawFirm.slug || "");
@@ -38,6 +48,10 @@ export function BioLinkForm({ lawFirm, members, logoUrl }: { lawFirm: any, membe
   const [showAddress, setShowAddress] = useState(bioLinkSettings.show_address ?? true);
   const [showTeam, setShowTeam] = useState(bioLinkSettings.show_team ?? true);
   const [showPortal, setShowPortal] = useState(bioLinkSettings.show_portal ?? true);
+  
+  const hasCustomLogo = !!bioLinkSettings.logo_path;
+  const [removeBioLinkLogo, setRemoveBioLinkLogo] = useState(false);
+  const [localLogoFilePreview, setLocalLogoFilePreview] = useState<string | null>(null);
   
   const theme = bioLinkSettings.theme || {};
   const [backgroundColor, setBackgroundColor] = useState(theme.backgroundColor || "#f8fafc");
@@ -111,6 +125,59 @@ export function BioLinkForm({ lawFirm, members, logoUrl }: { lawFirm: any, membe
               />
             </div>
             <p className="text-xs text-muted-foreground mt-1">Este é o link que você pode compartilhar no Instagram e WhatsApp.</p>
+          </div>
+
+          <div className="space-y-2 pt-4 border-t">
+            <Label className="text-sm font-semibold">Foto / Logo do Link da Bio</Label>
+            
+            {((hasCustomLogo && !removeBioLinkLogo) || localLogoFilePreview) ? (
+              <div className="flex items-center gap-4 rounded-lg border bg-muted/40 p-3 w-fit">
+                <img 
+                  src={localLogoFilePreview || logoUrl || "/placeholder.png"} 
+                  alt="Logo Personalizada" 
+                  className="h-16 w-16 object-contain border bg-white p-1 rounded-xl" 
+                />
+                <div className="space-y-1">
+                  <span className="font-semibold text-xs text-foreground block">Foto personalizada ativa</span>
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    className="h-7 text-xs px-2"
+                    onClick={() => {
+                      setRemoveBioLinkLogo(true);
+                      setLocalLogoFilePreview(null);
+                    }}
+                  >
+                    Remover e usar padrão do ERP
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Input 
+                  id="bioLinkLogo" 
+                  name="bioLinkLogo" 
+                  type="file" 
+                  accept="image/png,image/jpeg" 
+                  className="h-9 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const file = e.target.files[0];
+                      setLocalLogoFilePreview(URL.createObjectURL(file));
+                      setRemoveBioLinkLogo(false);
+                    }
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {removeBioLinkLogo 
+                    ? "Foto personalizada removida. Salve para confirmar. Se enviar um novo arquivo, ele será usado."
+                    : "Envie uma imagem PNG ou JPG de até 2MB. Se não enviar, usaremos a logo padrão do escritório."
+                  }
+                </p>
+              </div>
+            )}
+            
+            <input type="hidden" name="removeBioLinkLogo" value={removeBioLinkLogo ? "true" : "false"} />
           </div>
 
           <div className="space-y-4 pt-4 border-t">
@@ -328,7 +395,7 @@ export function BioLinkForm({ lawFirm, members, logoUrl }: { lawFirm: any, membe
           <BioLinkView 
             firm={{...lawFirm, slug}} 
             members={members} 
-            logoUrl={logoUrl} 
+            logoUrl={localLogoFilePreview || (removeBioLinkLogo ? erpLogoUrl : logoUrl)} 
             settingsOverride={previewSettings} 
           />
         </div>

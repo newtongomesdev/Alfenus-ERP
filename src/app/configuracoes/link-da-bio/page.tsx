@@ -38,12 +38,23 @@ export default async function BioLinkSettingsPage({
     .order("name");
 
   let logoUrl: string | null = null;
+  let erpLogoUrl: string | null = null;
   const lawFirmAny = context.lawFirm as any;
+  const bioLinkSettings = lawFirmAny.settings?.bio_link || {};
+  const logoToSign = bioLinkSettings.logo_path || lawFirmAny.logo_path;
+
+  if (logoToSign) {
+    const { data: signedData } = await admin.storage
+      .from("branding")
+      .createSignedUrl(logoToSign, 3600);
+    logoUrl = signedData?.signedUrl ?? null;
+  }
+
   if (lawFirmAny.logo_path) {
     const { data: signedData } = await admin.storage
       .from("branding")
       .createSignedUrl(lawFirmAny.logo_path, 3600);
-    logoUrl = signedData?.signedUrl ?? null;
+    erpLogoUrl = signedData?.signedUrl ?? null;
   }
 
   const successMessage = params.mensagem === "salvo" ? "Configurações do Link da Bio salvas com sucesso!" : null;
@@ -56,6 +67,7 @@ export default async function BioLinkSettingsPage({
         slug_em_uso: "Este nome de usuário já está em uso por outro escritório. Escolha outro.",
         ambiente: "Erro de ambiente.",
         salvar: "Não foi possível salvar as configurações. Tente novamente.",
+        logo: "A foto deve ser PNG ou JPG com até 2 MB.",
       }[params.erro]
     : null;
 
@@ -83,6 +95,7 @@ export default async function BioLinkSettingsPage({
           lawFirm={context.lawFirm} 
           members={members || []} 
           logoUrl={logoUrl} 
+          erpLogoUrl={erpLogoUrl}
         />
       </div>
     </AppShell>
