@@ -130,7 +130,7 @@ export async function registerPaymentAction(formData: FormData) {
     p_fine_cents: parsed.data.fineCents,
     p_interest_cents: parsed.data.interestCents,
     p_notes: parsed.data.notes || null,
-    p_registered_by: context.member.id,
+    p_registered_by: null,
   });
 
   if (error) {
