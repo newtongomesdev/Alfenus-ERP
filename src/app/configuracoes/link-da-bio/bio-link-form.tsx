@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { updateBioLinkAction } from "./actions";
+import { BioLinkView } from "@/components/bio-link/bio-link-view";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -27,7 +28,7 @@ interface CustomLink {
   url: string;
 }
 
-export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
+export function BioLinkForm({ lawFirm, members, logoUrl }: { lawFirm: any, members: any[], logoUrl: string | null }) {
   const bioLinkSettings = (lawFirm.settings as any)?.bio_link || {};
   
   const [slug, setSlug] = useState(lawFirm.slug || "");
@@ -64,8 +65,29 @@ export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
     setCustomLinks(newLinks);
   };
 
+  const previewSettings = {
+    show_whatsapp: showWhatsapp,
+    show_email: showEmail,
+    show_phone: showPhone,
+    show_address: showAddress,
+    show_team: showTeam,
+    show_portal: showPortal,
+    custom_links: customLinks,
+    theme: {
+      backgroundColor,
+      textColor,
+      buttonColor,
+      buttonTextColor,
+      buttonStyle,
+      buttonShape
+    }
+  };
+
   return (
-    <form action={updateBioLinkAction} className="space-y-6">
+    <div className="grid gap-8 lg:grid-cols-2">
+      {/* Coluna da Esquerda: Formulário de Configuração */}
+      <div className="order-2 lg:order-1">
+        <form action={updateBioLinkAction} className="space-y-6 relative">
       <Card className="rounded-lg">
         <CardHeader>
           <CardTitle>Endereço e Visibilidade</CardTitle>
@@ -286,7 +308,7 @@ export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-3 sticky bottom-4">
+      <div className="flex justify-end gap-3 sticky bottom-4 z-10 bg-background/80 backdrop-blur-sm p-4 rounded-xl border shadow-sm">
         <Link href="/configuracoes">
           <Button variant="outline" type="button">
             <ArrowLeft className="mr-2 size-4" />
@@ -296,5 +318,25 @@ export function BioLinkForm({ lawFirm }: { lawFirm: any }) {
         <SubmitButton />
       </div>
     </form>
+    </div>
+
+    {/* Coluna da Direita: Preview Visual */}
+    <div className="order-1 lg:order-2 lg:sticky lg:top-24 self-start">
+      <div className="bg-slate-100 rounded-[2.5rem] p-4 shadow-xl border-4 border-slate-300 w-full max-w-[350px] mx-auto relative overflow-hidden h-[750px] max-h-[85vh]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-slate-300 rounded-b-xl z-20"></div>
+        <div className="w-full h-full bg-slate-50 rounded-[1.8rem] overflow-y-auto overflow-x-hidden border border-slate-200 relative scrollbar-none">
+          <BioLinkView 
+            firm={{...lawFirm, slug}} 
+            members={members} 
+            logoUrl={logoUrl} 
+            settingsOverride={previewSettings} 
+          />
+        </div>
+      </div>
+      <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
+        Pré-visualização ao vivo
+      </p>
+    </div>
+  </div>
   );
 }

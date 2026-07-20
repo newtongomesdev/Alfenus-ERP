@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { getAppContext } from "@/lib/auth/context";
 import { BioLinkForm } from "./bio-link-form";
 import { can } from "@/lib/auth/permissions";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export default async function BioLinkSettingsPage({
   searchParams,
@@ -20,6 +21,29 @@ export default async function BioLinkSettingsPage({
   const canEdit = can(context.member.role, "configuracoes.administrar");
   if (!canEdit) {
     redirect("/configuracoes?erro=permissao");
+  }
+
+  const admin = getSupabaseAdminClient();
+  if (!admin) {
+    redirect("/configuracoes?erro=ambiente");
+  }
+  
+  // Buscar membros ativos
+  const { data: members } = await admin
+    .from("law_firm_members")
+    .select("id, name, email, phone, position, role, avatar_url")
+    .eq("law_firm_id", context.lawFirm.id)
+    .eq("status", "ativo")
+    .in("role", ["proprietario", "administrador", "advogado"])
+    .order("name");
+
+  let logoUrl: string | null = null;
+  const lawFirmAny = context.lawFirm as any;
+  if (lawFirmAny.logo_path) {
+    const { data: signedData } = await admin.storage
+      .from("branding")
+      .createSignedUrl(lawFirmAny.logo_path, 3600);
+    logoUrl = signedData?.signedUrl ?? null;
   }
 
   const successMessage = params.mensagem === "salvo" ? "Configurações do Link da Bio salvas com sucesso!" : null;
@@ -55,29 +79,11 @@ export default async function BioLinkSettingsPage({
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Coluna da Esquerda: Formulário de Configuração */}
-          <div className="order-2 lg:order-1">
-            <BioLinkForm lawFirm={context.lawFirm} />
-          </div>
-
-          {/* Coluna da Direita: Preview Visual */}
-          <div className="order-1 lg:order-2 lg:sticky lg:top-24 self-start">
-            <div className="bg-slate-100 rounded-[2.5rem] p-4 shadow-xl border-4 border-slate-300 w-full max-w-sm mx-auto relative overflow-hidden h-[800px] max-h-[85vh]">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-slate-300 rounded-b-xl z-10"></div>
-              <div className="w-full h-full bg-slate-50 rounded-[1.8rem] overflow-hidden border border-slate-200">
-                <iframe 
-                  src={`/@${context.lawFirm.slug}`} 
-                  className="w-full h-full border-0"
-                  title="Preview Link da Bio"
-                />
-              </div>
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
-              Pré-visualização ao vivo
-            </p>
-          </div>
-        </div>
+        <BioLinkForm 
+          lawFirm={context.lawFirm} 
+          members={members || []} 
+          logoUrl={logoUrl} 
+        />
       </div>
     </AppShell>
   );
