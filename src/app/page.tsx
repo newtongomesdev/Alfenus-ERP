@@ -34,6 +34,11 @@ const features = [
     description: "Acompanhe processos judiciais e demandas extrajudiciais de forma organizada, mantendo a documentação e os andamentos em dia.",
   },
   {
+    icon: Sparkles,
+    title: "Estúdio de Documentos & IA",
+    description: "Edite minutas diretamente em um canvas A4 virtual. Utilize a inteligência artificial para formalizar termos jurídicos, corrigir e expandir fundamentos, gerando PDFs com design profissional.",
+  },
+  {
     icon: Banknote,
     title: "Financeiro Estruturado",
     description: "Controle contratos, emissão de honorários, fluxo de parcelas, reembolsos de custas e alertas automáticos de inadimplência.",
@@ -52,13 +57,17 @@ const testimonials = [
     role: "Sócia-Fundadora, Vasconcelos & Associados",
   },
   {
-    quote: "Conseguimos unificar o financeiro, os prazos e a captação de clientes em um só lugar. A produtividade dos advogados aumentou em mais de 40% nas primeiras semanas.",
+    quote: "O estúdio de documentos com auxílio de IA reduziu em 70% o nosso tempo de redação de contratos e notificações extrajudiciais. A qualidade final dos PDFs é impecável.",
     author: "Dr. Roberto Mendes",
     role: "Diretor Operacional, Mendes Advogados",
   },
 ];
 
 const faqs = [
+  {
+    question: "Como funciona o Estúdio de Documentos com Inteligência Artificial?",
+    answer: "O Alfenus oferece um editor visual no formato exato de uma folha A4. Você seleciona um modelo (petição, procuração, acordo, etc.), preenche os dados integrados do cliente com um clique, edita o texto e utiliza nossa IA integrada para refinar a linguagem, corrigir pontuação, resumir ou expandir a fundamentação antes de gerar o PDF final.",
+  },
   {
     question: "O Alfenus faz a captura automática de intimações e andamentos nos tribunais?",
     answer: "Sim! Nossa inteligência monitora ativamente diários oficiais e sistemas de tribunais de todo o Brasil, capturando publicações e andamentos processuais, vinculando-os automaticamente à ficha do cliente e notificando os responsáveis.",
