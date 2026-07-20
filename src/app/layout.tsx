@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
+import { LgpdBanner } from "@/components/lgpd-banner";
 
 import "./globals.css";
 
@@ -68,7 +69,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="min-h-full antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <LgpdBanner />
+        </Providers>
       </body>
     </html>
   );
