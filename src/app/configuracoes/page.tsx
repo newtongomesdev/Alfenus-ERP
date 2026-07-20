@@ -206,7 +206,13 @@ export default async function SettingsPage({
                         Visualizar página pública <ExternalLink className="h-3.5 w-3.5" />
                       </Link>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Divulgue seus contatos, WhatsApp e equipe nas redes sociais (como o link da bio no Instagram) usando este link permanente.</p>
+                    <p className="text-xs text-muted-foreground mt-1 mb-2">Divulgue seus contatos, WhatsApp e equipe nas redes sociais (como o link da bio no Instagram) usando este link permanente.</p>
+                    <Link
+                      href="/configuracoes/link-da-bio"
+                      className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 text-xs font-medium text-slate-700 shadow-sm transition"
+                    >
+                      Configurar Link da Bio
+                    </Link>
                   </div>
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground pt-5">Plano</p>

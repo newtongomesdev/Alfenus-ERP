@@ -75,6 +75,15 @@ export default async function LawFirmBioPage({
     ? `https://api.whatsapp.com/send?phone=55${firm.phone.replace(/\D/g, "")}&text=${encodeURIComponent(whatsappMessage)}`
     : null;
 
+  // Lendo as configurações do Bio Link
+  const bioLinkSettings = (firm.settings as any)?.bio_link || {};
+  const showWhatsapp = bioLinkSettings.show_whatsapp ?? true;
+  const showEmail = bioLinkSettings.show_email ?? true;
+  const showPhone = bioLinkSettings.show_phone ?? true;
+  const showAddress = bioLinkSettings.show_address ?? true;
+  const showTeam = bioLinkSettings.show_team ?? true;
+  const customLinks = bioLinkSettings.custom_links || [];
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-between pb-8">
       <div className="w-full max-w-md px-6 pt-16 pb-12 flex flex-col items-center flex-grow">
@@ -97,7 +106,7 @@ export default async function LawFirmBioPage({
 
         {/* Links Principais */}
         <div className="w-full space-y-3.5 mb-8">
-          {whatsappUrl && (
+          {showWhatsapp && whatsappUrl && (
             <a
               href={whatsappUrl}
               target="_blank"
@@ -110,7 +119,7 @@ export default async function LawFirmBioPage({
             </a>
           )}
 
-          {firm.email && (
+          {showEmail && firm.email && (
             <a
               href={`mailto:${firm.email}`}
               className="w-full h-12 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
@@ -121,7 +130,7 @@ export default async function LawFirmBioPage({
             </a>
           )}
 
-          {firm.phone && (
+          {showPhone && firm.phone && (
             <a
               href={`tel:${firm.phone.replace(/\D/g, "")}`}
               className="w-full h-12 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
@@ -132,7 +141,7 @@ export default async function LawFirmBioPage({
             </a>
           )}
 
-          {formattedAddress && (
+          {showAddress && formattedAddress && (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
               target="_blank"
@@ -144,10 +153,22 @@ export default async function LawFirmBioPage({
               <ChevronRight className="h-4 w-4 opacity-50 shrink-0" />
             </a>
           )}
+          
+          {customLinks.map((link: any, index: number) => (
+            <a
+              key={index}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-sm transition active:scale-98 flex items-center justify-start px-4 gap-3 text-sm"
+            >
+              <span className="flex-grow text-center">{link.title}</span>
+            </a>
+          ))}
         </div>
 
         {/* Nossa Equipe */}
-        {members && members.length > 0 && (
+        {showTeam && members && members.length > 0 && (
           <div className="w-full space-y-3 mb-8">
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 px-1">
               <Users className="h-3.5 w-3.5" />
