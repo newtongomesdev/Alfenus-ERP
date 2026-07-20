@@ -3,21 +3,27 @@
 import { useState, useEffect } from "react";
 import { Cookie, ShieldAlert, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 export function LgpdBanner() {
   const [showBanner, setShowBanner] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const consent = localStorage.getItem("lgpd-consent");
-    if (!consent) {
+    const isExcluded = 
+      pathname.startsWith("/@") || 
+      ["/entrar", "/cadastro", "/recuperar-senha", "/nova-senha", "/onboarding"].includes(pathname);
+
+    if (!consent && !isExcluded) {
       // Pequeno delay para a animação ficar suave ao carregar
       const timer = setTimeout(() => {
         setShowBanner(true);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [pathname]);
 
   const handleAccept = () => {
     localStorage.setItem("lgpd-consent", "true");
