@@ -24,7 +24,7 @@ export async function signInAction(formData: FormData) {
   if (error) {
     await recordErrorEvent({
       source: "server",
-      message: "Falha de autenticação no login",
+      message: error.message || "Falha de autenticação no login",
       path: "/entrar",
       method: "POST",
       routePath: "/entrar",
