@@ -30,11 +30,24 @@ export default async function AgendamentoPage({
   const context = await getAppContext();
   const params = await searchParams;
 
-  const [professionals, services, { bookings }] = await Promise.all([
-    getProfessionals(context, { isActive: true }),
-    getServices(context, { isActive: true }),
-    getBookings(context, undefined, 1, 20),
-  ]);
+  let professionals: any[];
+  let services: any[];
+  let bookings: any[];
+  try {
+    const [profs, svcs, bookingsResult] = await Promise.all([
+      getProfessionals(context, { isActive: true }),
+      getServices(context, { isActive: true }),
+      getBookings(context, undefined, 1, 20),
+    ]);
+    professionals = profs;
+    services = svcs;
+    bookings = bookingsResult.bookings;
+  } catch {
+    console.error("[formularios-avancados/agendamento] Falha ao carregar dados — migrations podem não estar aplicadas");
+    professionals = [];
+    services = [];
+    bookings = [];
+  }
 
   const confirmedCount = bookings.filter((b) => b.status === "confirmado").length;
 

@@ -13,7 +13,13 @@ const subModules = [
 
 export default async function ClmDashboard() {
   const context = await getAppContext();
-  const stats = await getClmDashboardStats(context);
+  let stats;
+  try {
+    stats = await getClmDashboardStats(context);
+  } catch {
+    console.error("[clm] Falha ao carregar dashboard CLM — migrations podem não estar aplicadas");
+    stats = { totalRequests: 0, emAndamento: 0, aguardandoAprovacao: 0, ativos: 0, totalObligations: 0, totalAmendments: 0 };
+  }
 
   return (
     <div className="space-y-6">

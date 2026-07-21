@@ -37,17 +37,25 @@ export default async function AditivosPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const { amendments, total } = await getAllAmendments(
-    context,
-    params.status || params.amendmentType
-      ? {
-          status: params.status || undefined,
-          amendmentType: params.amendmentType || undefined,
-        }
-      : undefined,
-    page,
-    PAGE_SIZE
-  );
+  let amendments: any[];
+  let total: number;
+  try {
+    ({ amendments, total } = await getAllAmendments(
+      context,
+      params.status || params.amendmentType
+        ? {
+            status: params.status || undefined,
+            amendmentType: params.amendmentType || undefined,
+          }
+        : undefined,
+      page,
+      PAGE_SIZE
+    ));
+  } catch {
+    console.error("[clm/aditivos] Falha ao carregar dados — migrations podem não estar aplicadas");
+    amendments = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

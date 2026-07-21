@@ -46,20 +46,32 @@ export default async function SolicitacoesPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const [stats, { requests, total }] = await Promise.all([
-    getRequestStats(context),
-    getRequests(
-      context,
-      params.status || params.priority
-        ? {
-            status: (params.status as any) || undefined,
-            priority: params.priority || undefined,
-          }
-        : undefined,
-      page,
-      PAGE_SIZE
-    ),
-  ]);
+  let stats: { total: number; byStatus: Record<string, number> } = { total: 0, byStatus: {} };
+  let requests: any[];
+  let total: number;
+  try {
+    const [statsResult, requestsResult] = await Promise.all([
+      getRequestStats(context),
+      getRequests(
+        context,
+        params.status || params.priority
+          ? {
+              status: (params.status as any) || undefined,
+              priority: params.priority || undefined,
+            }
+          : undefined,
+        page,
+        PAGE_SIZE
+      ),
+    ]);
+    stats = statsResult;
+    requests = requestsResult.requests;
+    total = requestsResult.total;
+  } catch {
+    console.error("[clm/solicitacoes] Falha ao carregar dados — migrations podem não estar aplicadas");
+    requests = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

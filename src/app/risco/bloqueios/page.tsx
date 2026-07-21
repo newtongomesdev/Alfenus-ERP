@@ -50,12 +50,20 @@ export default async function BloqueiosPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const { seizures, total } = await getSeizures(
-    context,
-    params.status ? { status: params.status } : undefined,
-    page,
-    PAGE_SIZE
-  );
+  let seizures: any[];
+  let total: number;
+  try {
+    ({ seizures, total } = await getSeizures(
+      context,
+      params.status ? { status: params.status } : undefined,
+      page,
+      PAGE_SIZE
+    ));
+  } catch {
+    console.error("[risco/bloqueios] Falha ao carregar dados — migrations podem não estar aplicadas");
+    seizures = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

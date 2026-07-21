@@ -38,7 +38,15 @@ export default async function ObrigacoesPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const { obligations, total } = await getObligations(context, undefined, page, PAGE_SIZE);
+  let obligations: any[];
+  let total: number;
+  try {
+    ({ obligations, total } = await getObligations(context, undefined, page, PAGE_SIZE));
+  } catch {
+    console.error("[clm/obrigacoes] Falha ao carregar dados — migrations podem não estar aplicadas");
+    obligations = [];
+    total = 0;
+  }
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const statusCount = (s: string) =>

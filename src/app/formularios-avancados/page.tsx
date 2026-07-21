@@ -12,7 +12,13 @@ const subModules = [
 
 export default async function FormulariosDashboard() {
   const context = await getAppContext();
-  const stats = await getFormulariosDashboardStats(context);
+  let stats: { totalFormularios: number; totalSubmissoes: number; agendamentosConfirmados: number; totalProfissionais: number; totalServicos: number };
+  try {
+    stats = await getFormulariosDashboardStats(context);
+  } catch {
+    console.error("[formularios-avancados] Falha ao carregar dados — migrations podem não estar aplicadas");
+    stats = { totalFormularios: 0, totalSubmissoes: 0, agendamentosConfirmados: 0, totalProfissionais: 0, totalServicos: 0 };
+  }
 
   return (
     <div className="space-y-6">

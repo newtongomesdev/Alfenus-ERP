@@ -38,19 +38,32 @@ export default async function FormulariosPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const { formBuilders, total } = await getFormBuilders(
-    context,
-    params.formType ? { formType: params.formType } : undefined,
-    page,
-    PAGE_SIZE
-  );
+  let formBuilders: any[];
+  let total: number;
+  try {
+    ({ formBuilders, total } = await getFormBuilders(
+      context,
+      params.formType ? { formType: params.formType } : undefined,
+      page,
+      PAGE_SIZE
+    ));
+  } catch {
+    console.error("[formularios-avancados/formularios] Falha ao carregar dados — migrations podem não estar aplicadas");
+    formBuilders = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const submissionCounts = await getSubmissionCounts(
-    context,
-    formBuilders.map((f) => f.id)
-  );
+  let submissionCounts: Record<string, number> = {};
+  try {
+    submissionCounts = await getSubmissionCounts(
+      context,
+      formBuilders.map((f) => f.id)
+    );
+  } catch {
+    console.error("[formularios-avancados/formularios] Falha ao carregar contagens — migrations podem não estar aplicadas");
+  }
 
   return (
     <div className="space-y-6">

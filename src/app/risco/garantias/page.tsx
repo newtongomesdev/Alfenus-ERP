@@ -53,10 +53,16 @@ export default async function GarantiasPage({
   const page = Math.max(1, Number(params.page ?? 1));
   const aba = params.aba ?? "garantias";
 
-  const [guaranteesResult, depositsResult] = await Promise.all([
-    getGuarantees(context, undefined, page, PAGE_SIZE),
-    getDeposits(context, undefined, page, PAGE_SIZE),
-  ]);
+  let guaranteesResult: { guarantees: any[]; total: number } = { guarantees: [], total: 0 };
+  let depositsResult: { deposits: any[]; total: number } = { deposits: [], total: 0 };
+  try {
+    [guaranteesResult, depositsResult] = await Promise.all([
+      getGuarantees(context, undefined, page, PAGE_SIZE),
+      getDeposits(context, undefined, page, PAGE_SIZE),
+    ]);
+  } catch {
+    console.error("[risco/garantias] Falha ao carregar dados — migrations podem não estar aplicadas");
+  }
 
   const guaranteeTotalPages = Math.max(
     1,

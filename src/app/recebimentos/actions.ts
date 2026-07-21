@@ -134,11 +134,35 @@ export async function registerPaymentAction(formData: FormData) {
   });
 
   if (error) {
+    console.error("[recebimentos] RPC register_payment error:", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      lawFirmId: context.lawFirm.id,
+      installmentId: parsed.data.installmentId,
+      amountCents: parsed.data.amountCents,
+    });
     // Handle duplicate detection
     if (error.message?.includes("duplicado")) {
       redirect("/recebimentos?duplicado=1");
     }
-    redirect("/recebimentos?erro=register");
+    // Pass specific error info when it's a permission or validation issue from the RPC
+    if (error.message?.includes("Permissão") || error.message?.includes("não pertence")) {
+      redirect("/recebimentos?erro=permissao_rpc");
+    }
+    if (error.message?.includes("não encontrada")) {
+      redirect("/recebimentos?erro=parcela_nao_encontrada");
+    }
+    if (error.message?.includes("excede o saldo")) {
+      redirect("/recebimentos?erro=saldo_insuficiente");
+    }
+    if (error.message?.includes("não autenticado")) {
+      redirect("/recebimentos?erro=nao_autenticado");
+    }
+    // Generic RPC error — include the error message for debugging
+    const encodedMsg = encodeURIComponent(error.message ?? "Erro desconhecido no RPC");
+    redirect(`/recebimentos?erro=register&msg=${encodedMsg}`);
   }
 
   const rpcResult = data as { payment_id?: string; installment_status?: string } | null;

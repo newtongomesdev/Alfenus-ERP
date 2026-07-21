@@ -42,20 +42,32 @@ export default async function ProvisoesPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const [stats, { provisions, total }] = await Promise.all([
-    getProvisionStats(context),
-    getProvisions(
-      context,
-      params.status || params.provisaoType
-        ? {
-            status: params.status || undefined,
-            provisionType: params.provisaoType || undefined,
-          }
-        : undefined,
-      page,
-      PAGE_SIZE
-    ),
-  ]);
+  let stats: { total: number; totalValue: number; byStatus: Record<string, number>; byType: Record<string, { count: number; value: number }> } = { total: 0, totalValue: 0, byStatus: {}, byType: {} };
+  let provisions: any[];
+  let total: number;
+  try {
+    const [statsResult, provisionsResult] = await Promise.all([
+      getProvisionStats(context),
+      getProvisions(
+        context,
+        params.status || params.provisaoType
+          ? {
+              status: params.status || undefined,
+              provisionType: params.provisaoType || undefined,
+            }
+          : undefined,
+        page,
+        PAGE_SIZE
+      ),
+    ]);
+    stats = statsResult;
+    provisions = provisionsResult.provisions;
+    total = provisionsResult.total;
+  } catch {
+    console.error("[risco/provisoes] Falha ao carregar dados — migrations podem não estar aplicadas");
+    provisions = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

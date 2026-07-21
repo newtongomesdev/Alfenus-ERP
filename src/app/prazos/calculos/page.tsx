@@ -36,15 +36,25 @@ export default async function DeadlineCalculationsPage({
   const page = Math.max(1, Number(params.page ?? 1));
   const PAGE_SIZE = 20;
 
-  const [stats, { calculations, total }] = await Promise.all([
-    getCalculationStats(context),
-    getCalculations(
-      context,
-      params.status ? { status: params.status } : undefined,
-      page,
-      PAGE_SIZE
-    ),
-  ]);
+  let stats;
+  let calculations;
+  let total;
+  try {
+    [stats, { calculations, total }] = await Promise.all([
+      getCalculationStats(context),
+      getCalculations(
+        context,
+        params.status ? { status: params.status } : undefined,
+        page,
+        PAGE_SIZE
+      ),
+    ]);
+  } catch {
+    console.error("[prazos/calculos] Falha ao carregar cálculos — migrations podem não estar aplicadas");
+    stats = { total: 0, byStatus: {}, avgDaysToResolve: 0 };
+    calculations = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

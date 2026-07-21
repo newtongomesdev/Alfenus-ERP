@@ -44,17 +44,25 @@ export default async function AvaliacoesPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const { assessments, total } = await getRiskAssessments(
-    context,
-    params.status || params.classification
-      ? {
-          status: params.status || undefined,
-          classification: params.classification || undefined,
-        }
-      : undefined,
-    page,
-    PAGE_SIZE
-  );
+  let assessments: any[];
+  let total: number;
+  try {
+    ({ assessments, total } = await getRiskAssessments(
+      context,
+      params.status || params.classification
+        ? {
+            status: params.status || undefined,
+            classification: params.classification || undefined,
+          }
+        : undefined,
+      page,
+      PAGE_SIZE
+    ));
+  } catch {
+    console.error("[risco/avaliacoes] Falha ao carregar dados — migrations podem não estar aplicadas");
+    assessments = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

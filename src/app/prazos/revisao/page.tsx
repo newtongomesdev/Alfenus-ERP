@@ -21,12 +21,18 @@ export default async function RevisaoPage() {
   const context = await getAppContext();
   const canReview = can(context.member?.role ?? "visualizador", "prazos.editar");
 
-  const { calculations } = await getCalculations(
-    context,
-    { status: "aguardando_revisao" },
-    1,
-    50
-  );
+  let calculations: any[];
+  try {
+    ({ calculations } = await getCalculations(
+      context,
+      { status: "aguardando_revisao" },
+      1,
+      50
+    ));
+  } catch {
+    console.error("[prazos/revisao] Falha ao carregar dados — migrations podem não estar aplicadas");
+    calculations = [];
+  }
 
   return (
     <div className="space-y-6">

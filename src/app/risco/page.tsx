@@ -16,7 +16,13 @@ const subModules = [
 
 export default async function RiscoDashboard() {
   const context = await getAppContext();
-  const stats = await getRiskDashboardStats(context);
+  let stats;
+  try {
+    stats = await getRiskDashboardStats(context);
+  } catch {
+    console.error("[risco] Falha ao carregar dashboard de risco — migrations podem não estar aplicadas");
+    stats = { totalClaims: 0, totalValue: 0, totalRiskAssessments: 0, totalProvisions: 0, totalProvisionValue: 0, totalGuarantees: 0, totalGuaranteeValue: 0, totalSeizures: 0, totalSeizureValue: 0, byStatus: {}, byClassification: {}, byType: {} };
+  }
 
   return (
     <div className="space-y-6">

@@ -43,20 +43,32 @@ export default async function PedidosPage({
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  const [stats, { claims, total }] = await Promise.all([
-    getClaimStats(context),
-    getClaims(
-      context,
-      params.status || params.category
-        ? {
-            status: params.status || undefined,
-            category: params.category || undefined,
-          }
-        : undefined,
-      page,
-      PAGE_SIZE
-    ),
-  ]);
+  let stats: { total: number; totalValue: number; byStatus: Record<string, number> } = { total: 0, totalValue: 0, byStatus: {} };
+  let claims: any[];
+  let total: number;
+  try {
+    const [statsResult, claimsResult] = await Promise.all([
+      getClaimStats(context),
+      getClaims(
+        context,
+        params.status || params.category
+          ? {
+              status: params.status || undefined,
+              category: params.category || undefined,
+            }
+          : undefined,
+        page,
+        PAGE_SIZE
+      ),
+    ]);
+    stats = statsResult;
+    claims = claimsResult.claims;
+    total = claimsResult.total;
+  } catch {
+    console.error("[risco/pedidos] Falha ao carregar dados — migrations podem não estar aplicadas");
+    claims = [];
+    total = 0;
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const statusCount = (s: string) => stats.byStatus[s] ?? 0;

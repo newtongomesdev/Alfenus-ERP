@@ -29,7 +29,13 @@ const eventTypeLabels: Record<string, string> = {
 
 export default async function CalendariosPage() {
   const context = await getAppContext();
-  const events = await getCalendarEvents(context);
+  let events: any[];
+  try {
+    events = await getCalendarEvents(context);
+  } catch {
+    console.error("[prazos/calendarios] Falha ao carregar dados — migrations podem não estar aplicadas");
+    events = [];
+  }
   const canManage = can(context.member?.role ?? "visualizador", "prazos.criar");
 
   const groupedByType = events.reduce(
