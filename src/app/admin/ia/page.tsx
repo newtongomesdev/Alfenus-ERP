@@ -1,5 +1,5 @@
 import { getAdminContext } from "@/lib/admin/auth";
-import { getAiSettings, getOpenRouterModels } from "@/lib/ai/openrouter";
+import { getAiSettings, getAiUsageLogs, getOpenRouterModels } from "@/lib/ai/openrouter";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { saveAiSettings } from "./actions";
@@ -8,8 +8,9 @@ import { ModelCombobox } from "@/components/admin/model-combobox";
 export default async function AdminAiPage({ searchParams }: { searchParams: Promise<{ salvo?: string }> }) {
   const { adminClient } = await getAdminContext();
   const [models, settings] = await Promise.all([getOpenRouterModels(), getAiSettings()]);
-  const { data: usage } = await (adminClient as any).from("ai_usage_logs").select("law_firm_id, model, operation, total_tokens, cost_usd, created_at").order("created_at", { ascending: false }).limit(500);
-  const usageRows = (usage ?? []) as Array<{ law_firm_id: string | null; model: string; operation: string; total_tokens: number; cost_usd: number; created_at: string }>;
+  const { data: usage, error: usageError } = await getAiUsageLogs(adminClient);
+  if (usageError) throw new Error(`Não foi possível carregar os custos de IA: ${usageError.message}`);
+  const usageRows = usage ?? [];
   const totalCost = usageRows.reduce((sum, row) => sum + Number(row.cost_usd || 0), 0);
   const totalTokens = usageRows.reduce((sum, row) => sum + Number(row.total_tokens || 0), 0);
   const textModels = models.filter((model) => model.id).slice(0, 500);

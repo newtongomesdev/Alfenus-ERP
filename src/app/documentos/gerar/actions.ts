@@ -322,10 +322,9 @@ export async function enhanceDocumentWithAi(input: {
     system: systemPrompt,
     prompt: userPrompt,
     lawFirmId: context.lawFirm.id,
-    actorId: context.member.id,
+    actorId: context.member.userId,
     operation: "document_ai_enhance",
   });
 
   return result.content ? result.content.trim() : input.content;
 }
-

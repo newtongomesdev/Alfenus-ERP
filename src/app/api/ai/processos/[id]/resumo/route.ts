@@ -17,10 +17,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (error || !legalCase) return NextResponse.json({ error: "Processo não encontrado" }, { status: 404 });
   const { data: movements } = await supabase.from("legal_case_movements").select("title, description, occurred_at").eq("legal_case_id", id).eq("law_firm_id", context.lawFirm.id).order("occurred_at", { ascending: false }).limit(30);
   const source = JSON.stringify({ processo: legalCase, movimentacoes: movements ?? [] });
-  const embedding = await embedWithOpenRouter(`${question}\n${source}`, settings.embedding_model);
+  const embedding = await embedWithOpenRouter({ text: `${question}\n${source}`, model: settings.embedding_model, lawFirmId: context.lawFirm.id, actorId: context.member.userId, operation: "case_embedding" });
   if (embedding.length === 1536) await (supabase as any).from("ai_document_chunks").insert({ law_firm_id: context.lawFirm.id, legal_case_id: id, content: source, embedding: `[${embedding.join(",")}]`, metadata: { type: "case_context" } });
   const { data: matches } = embedding.length === 1536 ? await (supabase as any).rpc("match_ai_document_chunks", { query_law_firm_id: context.lawFirm.id, query_embedding: `[${embedding.join(",")}]`, match_count: 6 }) : { data: [] };
   const retrievedContext = (matches ?? []).map((item: { content: string }) => item.content).join("\n\n") || source;
-  const result = await generateWithOpenRouter({ model: settings.active_model, system: "Você é um assistente jurídico do Alfenus. Produza apenas rascunhos para revisão humana e preserve confidencialidade.", prompt: `Pergunta: ${question}\n\nTrechos recuperados da base autorizada do processo:\n${retrievedContext}\n\nResponda em português. Não invente fatos. Quando faltar informação, diga explicitamente.`, lawFirmId: context.lawFirm.id, actorId: context.member.id, operation: "case_summary" });
+  const result = await generateWithOpenRouter({ model: settings.active_model, system: "Você é um assistente jurídico do Alfenus. Produza apenas rascunhos para revisão humana e preserve confidencialidade.", prompt: `Pergunta: ${question}\n\nTrechos recuperados da base autorizada do processo:\n${retrievedContext}\n\nResponda em português. Não invente fatos. Quando faltar informação, diga explicitamente.`, lawFirmId: context.lawFirm.id, actorId: context.member.userId, operation: "case_summary" });
   return NextResponse.json({ answer: result.content });
 }
