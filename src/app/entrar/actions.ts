@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { hasSupabaseEnv } from "@/lib/env";
+import { recordErrorEvent } from "@/lib/observability/error-events";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function signInAction(formData: FormData) {
@@ -21,6 +22,18 @@ export async function signInAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
+    await recordErrorEvent({
+      source: "server",
+      message: "Falha de autenticação no login",
+      path: "/entrar",
+      method: "POST",
+      routePath: "/entrar",
+      metadata: {
+        kind: "auth-sign-in",
+        code: error.code ?? null,
+        status: error.status ?? null,
+      },
+    });
     redirect("/entrar?erro=credenciais");
   }
 
@@ -41,6 +54,14 @@ export async function signInAction(formData: FormData) {
       .maybeSingle();
 
     if (membershipError) {
+      await recordErrorEvent({
+        source: "server",
+        message: "Falha ao verificar o escritório do usuário após o login",
+        path: "/entrar",
+        method: "POST",
+        routePath: "/entrar",
+        metadata: { kind: "auth-membership-check", code: membershipError.code ?? null },
+      });
       redirect("/entrar?erro=acesso");
     }
 
