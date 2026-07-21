@@ -185,6 +185,9 @@ export function maskSensitiveData(
     "conta_bancaria",
     "agencia",
     "chave_pix",
+    "email",
+    "telefone",
+    "phone",
   ];
 
   for (const field of maskedFields) {
