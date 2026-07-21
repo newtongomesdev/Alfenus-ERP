@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogsPlataformaTab } from "./logs-plataforma-tab";
+import { ErrorEventsTab } from "./error-events-tab";
 
 export default async function AdminLogsPage({
   searchParams,
@@ -48,6 +49,7 @@ export default async function AdminLogsPage({
           <TabsList>
             <TabsTrigger value="tenant">Ações dos Tenants</TabsTrigger>
             <TabsTrigger value="plataforma">Ações da Plataforma</TabsTrigger>
+            <TabsTrigger value="erros">Erros</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tenant">
@@ -118,6 +120,10 @@ export default async function AdminLogsPage({
 
           <TabsContent value="plataforma">
             <LogsPlataformaTab currentPage={adminPage} pageSize={PAGE_SIZE} />
+          </TabsContent>
+
+          <TabsContent value="erros">
+            <ErrorEventsTab currentPage={adminPage} pageSize={PAGE_SIZE} />
           </TabsContent>
         </Tabs>
       </div>
