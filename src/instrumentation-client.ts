@@ -46,7 +46,9 @@ window.fetch = async (input, init) => {
 
   try {
     const response = await nativeFetch(input, init);
-    if (!response.ok && requestPath !== "/api/telemetry/errors") {
+    // Server Actions and redirects de autenticação usam 3xx normalmente.
+    // Somente respostas 4xx/5xx representam falha para fins de observabilidade.
+    if (response.status >= 400 && requestPath !== "/api/telemetry/errors") {
       sendClientError(new Error(`Fetch HTTP ${response.status} em ${requestPath}`), requestPath, {
         status: response.status,
         method: requestMethod,
