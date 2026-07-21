@@ -75,7 +75,6 @@ export const navigationSections = [
       { label: "Recebimentos", href: "/recebimentos", icon: Banknote },
       { label: "Despesas", href: "/despesas", icon: Receipt },
       { label: "Horas", href: "/horas", icon: Timer },
-      { label: "Relatório Horas", href: "/horas/relatorio", icon: Timer },
       { label: "Relatórios", href: "/relatorios", icon: ChartNoAxesCombined },
       { label: "Exportar", href: "/exportar", icon: Download },
     ],

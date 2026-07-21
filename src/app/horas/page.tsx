@@ -38,7 +38,18 @@ export default async function TimeEntriesPage() {
   return (
     <AppShell memberName={context.member.name}>
       <div className="space-y-6">
-        <PageHeader title="Horas" description="Registre esforço por cliente, processo e responsável." />
+        <PageHeader
+          title="Horas"
+          description="Registre esforço por cliente, processo e responsável."
+          actions={
+            <Link
+              href="/horas/relatorio"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted"
+            >
+              Ver relatório
+            </Link>
+          }
+        />
 
         <section className="grid gap-4 md:grid-cols-3">
           <Card className="rounded-lg">
