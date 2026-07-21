@@ -158,6 +158,16 @@ export default async function DocumentsPage({
         <PageHeader
           title="Documentos"
           description="Armazene arquivos vinculados ao contexto jurídico do escritório."
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Link href="/documentos/modelos" className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium hover:bg-muted">
+                Modelos
+              </Link>
+              <Link href="/documentos/gerar" className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/80">
+                Gerar documento
+              </Link>
+            </div>
+          }
         />
 
         {params.enviado ? (

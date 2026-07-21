@@ -57,15 +57,12 @@ export const navigationSections = [
       { label: "Correspondentes", href: "/correspondentes", icon: Users },
       { label: "Conflitos", href: "/conflitos", icon: FileSearch },
       { label: "Prazos", href: "/prazos", icon: CalendarDays },
-      { label: "Cálculo Prazos", href: "/prazos/calculos", icon: CalendarDays },
-      { label: "Calendários", href: "/prazos/calendarios", icon: CalendarDays },
       { label: "Risco e Valores", href: "/risco", icon: Scale },
       { label: "CLM Contratos", href: "/clm", icon: FileText },
       { label: "Valores Clientes", href: "/valores-clientes", icon: Banknote },
       { label: "Agenda", href: "/agenda", icon: Clock3 },
       { label: "Tarefas", href: "/tarefas", icon: BriefcaseBusiness },
       { label: "Workflows", href: "/workflows", icon: GitBranch },
-      { label: "Gerar Doc", href: "/documentos/gerar", icon: FileText },
     ],
   },
   {
@@ -84,7 +81,6 @@ export const navigationSections = [
     items: [
       { label: "Notificações", href: "/notificacoes", icon: Bell },
       { label: "Documentos", href: "/documentos", icon: FileArchive },
-      { label: "Modelos", href: "/documentos/modelos", icon: FileText },
       { label: "Portal do cliente", href: "/portal-cliente", icon: KeyRound },
       { label: "Equipe", href: "/equipe", icon: UserRoundCog },
       { label: "Campos", href: "/configuracoes/campos-personalizados", icon: SlidersHorizontal },
