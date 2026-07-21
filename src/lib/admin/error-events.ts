@@ -8,6 +8,7 @@ type ErrorEventsQueryResult = {
 
 type ErrorEventsQuery = {
   select: (columns: string, options?: { count?: "exact" }) => ErrorEventsQuery;
+  not: (column: string, operator: string, value: string) => ErrorEventsQuery;
   order: (column: string, options: { ascending: boolean }) => ErrorEventsQuery;
   range: (from: number, to: number) => Promise<ErrorEventsQueryResult>;
 };
@@ -29,6 +30,7 @@ export async function getAdminErrorEvents(adminClient: SupabaseClient, page: num
   const { data, count, error } = await (adminClient as unknown as { from(table: string): ErrorEventsQuery })
     .from("error_events")
     .select("id, source, message, digest, path, method, route_path, route_type, created_at", { count: "exact" })
+    .not("message", "like", "Fetch HTTP 3%")
     .order("created_at", { ascending: false })
     .range(from, from + limit - 1);
 

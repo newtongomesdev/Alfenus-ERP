@@ -15,6 +15,11 @@ const payloadSchema = z.object({
 export async function POST(request: Request) {
   try {
     const payload = payloadSchema.parse(await request.json());
+    const status = payload.metadata?.status;
+    const isRedirect = typeof status === "number" && status >= 300 && status < 400;
+    if (isRedirect || /^Fetch HTTP 3\d{2}\b/.test(payload.message)) {
+      return new NextResponse(null, { status: 204 });
+    }
     await recordErrorEvent(payload);
   } catch {
     // Do not turn a telemetry failure into another user-facing error.
