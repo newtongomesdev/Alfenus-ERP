@@ -17,6 +17,8 @@ import {
   Quote,
   Compass,
   ChevronDown,
+  ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,46 +26,52 @@ import { motion, AnimatePresence } from "framer-motion";
 const features = [
   {
     icon: Users,
-    title: "CRM Jurídico Avançado",
+    title: "Atendimento & CRM Jurídico",
     description:
-      "Gerencie o funil de prospecção, a captação de leads e a jornada completa de conversão de novos clientes com histórico unificado.",
+      "Acompanhe novos contatos desde a primeira consulta até a assinatura do contrato. Previna conflitos de interesse e divulgue seu escritório com um Link da Bio profissional.",
   },
   {
     icon: Scale,
-    title: "Gestão Integrada de Processos",
+    title: "Controladoria de Processos",
     description:
-      "Acompanhe processos judiciais e demandas extrajudiciais de forma organizada, mantendo a documentação e os andamentos em dia.",
-  },
-  {
-    icon: Sparkles,
-    title: "Estúdio de Documentos & IA",
-    description:
-      "Edite minutas diretamente em um canvas A4 virtual. Utilize a inteligência artificial para formalizar termos jurídicos, corrigir e expandir fundamentos, gerando PDFs com design profissional.",
-  },
-  {
-    icon: Banknote,
-    title: "Financeiro Estruturado",
-    description:
-      "Controle contratos, emissão de honorários, fluxo de parcelas, reembolsos de custas e alertas automáticos de inadimplência.",
+      "Organize os processos judiciais e procedimentos administrativos da banca em um único local, com histórico de andamentos e acompanhamento de fases.",
   },
   {
     icon: CalendarClock,
-    title: "Agenda e Prazos Inteligentes",
+    title: "Gestão Rigorosa de Prazos",
     description:
-      "Planeje audiências, reuniões e tarefas internas com um calendário integrado e notificações ativas para evitar perdas de prazos.",
+      "Evite a perda de datas fatais com contagem de prazos em dias úteis, calendários forenses integrados e alertas preventivos para a equipe antes das audiências.",
+  },
+  {
+    icon: Sparkles,
+    title: "Elaboração de Peças com IA",
+    description:
+      "Escreva minutas, petições e procurações em uma folha A4 virtual. Utilize a inteligência artificial para aprimorar fundamentos jurídicos e formalizar a redação antes de gerar o PDF.",
+  },
+  {
+    icon: Banknote,
+    title: "Financeiro & Honorários Jurídicos",
+    description:
+      "Controle honorários contratuais, parcelamentos de consultas, honorários sucumbenciais, cobrança por horas (*time tracking*) e reembolsos de custas processuais.",
+  },
+  {
+    icon: UserCheck,
+    title: "Portal Exclusivo para o Cliente",
+    description:
+      "Proporcione um espaço seguro para que seu cliente consulte o andamento resumido do caso e envie documentos com praticidade, reduzindo chamadas no WhatsApp.",
   },
 ];
 
 const testimonials = [
   {
     quote:
-      "A Alfenus revolucionou a gestão interna do nosso escritório. O isolamento completo dos dados nos trouxe a segurança necessária para expandir as operações digitais.",
+      "O Alfenus trouxe a organização que nosso escritório precisava para expandir sem perder o controle dos prazos e a qualidade do atendimento prestado ao cliente.",
     author: "Dra. Mariana Vasconcelos",
     role: "Sócia-Fundadora, Vasconcelos & Associados",
   },
   {
     quote:
-      "O estúdio de documentos com auxílio de IA reduziu em 70% o nosso tempo de redação de contratos e notificações extrajudiciais. A qualidade final dos PDFs é impecável.",
+      "A facilidade para elaborar minutas de contratos e o controle de honorários mudaram nossa rotina. Ganhamos agilidade na produção de peças e clareza no fluxo financeiro.",
     author: "Dr. Roberto Mendes",
     role: "Diretor Operacional, Mendes Advogados",
   },
@@ -71,29 +79,29 @@ const testimonials = [
 
 const faqs = [
   {
-    question: "Como funciona o Estúdio de Documentos com Inteligência Artificial?",
+    question: "Como a Inteligência Artificial auxilia na elaboração de peças jurídicas?",
     answer:
-      "O Alfenus oferece um editor visual no formato exato de uma folha A4. Você seleciona um modelo (petição, procuração, acordo, etc.), preenche os dados integrados do cliente com um clique, edita o texto e utiliza nossa IA integrada para refinar a linguagem, corrigir pontuação, resumir ou expandir a fundamentação antes de gerar o PDF final.",
+      "O estúdio de documentos funciona como um editor de texto no formato visual exato de uma página A4. Você pode preencher dados do cliente com um clique, editar a minuta e utilizar a IA integrada para aprimorar a linguagem formal, revisar pontos de fundamentação ou resumir fatos, gerando o PDF pronto para uso.",
   },
   {
-    question: "O Alfenus faz a captura automática de intimações e andamentos nos tribunais?",
+    question: "Como o Alfenus previne a perda de prazos e datas de audiências?",
     answer:
-      "Sim! Nossa inteligência monitora ativamente diários oficiais e sistemas de tribunais de todo o Brasil, capturando publicações e andamentos processuais, vinculando-os automaticamente à ficha do cliente e notificando os responsáveis.",
+      "O sistema centraliza toda a agenda do escritório. Além do cálculo de prazos considerando dias úteis e feriados, você recebe alertas visuais na página inicial do sistema e avisos antecipados para que a equipe cumpra os compromissos com tranquilidade.",
   },
   {
-    question: "Como a plataforma me ajuda a garantir que nenhum prazo judicial seja perdido?",
+    question: "Consigo organizar honorários contratuais, parcelados e sucumbenciais?",
     answer:
-      "O Alfenus centraliza toda a agenda de compromissos e tarefas jurídicas. O sistema envia alertas automáticos na tela inicial e notificações por e-mail para a equipe antes do vencimento de qualquer prazo crítico ou data de audiência.",
+      "Sim! O módulo financeiro foi projetado para a contabilidade jurídica: acompanhe o recebimento de honorários fixos ou êxito, controle parcelamentos de consultas, registre horas trabalhadas em pareceres e lance custas processuais para reembolso pelo cliente.",
   },
   {
-    question: "Consigo controlar honorários contratuais, sucumbenciais e parcelamentos?",
+    question: "Como funciona o Portal do Cliente para o meu escritório?",
     answer:
-      "Com certeza. A nossa área financeira foi planejada especificamente para o fluxo de caixa de escritórios de advocacia, permitindo parcelar honorários contratuais, controlar repasses de sucumbência e monitorar a inadimplência com lembretes automáticos de cobrança.",
+      "Você pode disponibilizar aos seus clientes um link de acesso seguro onde eles consultam o andamento resumido de suas causas e enviam documentos solicitados. Isso transmite transparência e reduz o volume de mensagens cobrando atualizações.",
   },
   {
-    question: "Os dados do meu escritório e dos meus clientes estão seguros sob a LGPD?",
+    question: "Os dados dos meus clientes e processos estão protegidos?",
     answer:
-      "Segurança e sigilo profissional são nossas prioridades máximas. Todos os dados e documentos anexados são criptografados em trânsito e em repouso nos servidores mais seguros do mercado, com backups diários automáticos e políticas rigorosas de controle de acesso.",
+      "Com certeza. Mantemos um padrão rigoroso de segurança de dados e permissões de acesso por perfil de usuário, assegurando a confidencialidade exigida pela advocacia e o cumprimento da Lei Geral de Proteção de Dados (LGPD).",
   },
 ];
 
@@ -146,7 +154,7 @@ export function LandingPageClient() {
               Alfenus
             </Link>
           </motion.div>
-          
+
           <motion.nav
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -199,7 +207,7 @@ export function LandingPageClient() {
             <motion.div variants={itemVariants}>
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1 text-xs font-medium text-primary shadow-xs">
                 <Sparkles className="size-3.5 text-primary animate-pulse" />
-                <span>Tecnologia de ponta para gestão jurídica</span>
+                <span>Tecnologia e Eficiência para Advocacia de Alto Padrão</span>
               </div>
             </motion.div>
 
@@ -207,9 +215,9 @@ export function LandingPageClient() {
               variants={itemVariants}
               className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl lg:leading-[1.1]"
             >
-              A inteligência operacional que seu{" "}
+              A gestão completa que devolve o tempo para{" "}
               <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                escritório merece.
+                sua advocacia.
               </span>
             </motion.h1>
 
@@ -217,7 +225,7 @@ export function LandingPageClient() {
               variants={itemVariants}
               className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
             >
-              Integre captação de clientes, controle financeiro à prova de falhas, andamento de processos judiciais e controle rigoroso de prazos em uma única plataforma segura e integrada.
+              Centralize o atendimento a clientes, a controladoria de processos, a contagem rigorosa de prazos e a gestão de honorários em uma plataforma intuitiva, elegante e segura.
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex flex-col gap-3.5 sm:flex-row pt-2">
@@ -237,7 +245,7 @@ export function LandingPageClient() {
                   id="login-hero-btn"
                   className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-6 text-sm font-semibold transition hover:bg-muted/80 hover:text-foreground w-full sm:w-auto"
                 >
-                  Acessar Plataforma
+                  Acessar o Sistema
                 </Link>
               </motion.div>
             </motion.div>
@@ -250,19 +258,19 @@ export function LandingPageClient() {
                 <div className="flex size-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600">
                   <CheckCircle2 className="size-4" />
                 </div>
-                Multi-escritórios & Filiais
+                Prazos Processuais sob Controle
               </div>
               <div className="flex items-center gap-2.5">
                 <div className="flex size-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600">
                   <LockKeyhole className="size-4" />
                 </div>
-                Isolamento Total de Dados
+                Sigilo Profissional Garantido
               </div>
               <div className="flex items-center gap-2.5">
                 <div className="flex size-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600">
                   <FileText className="size-4" />
                 </div>
-                Registro Completo de Atividades
+                Honorários & Custas em Dia
               </div>
             </motion.div>
           </motion.div>
@@ -286,14 +294,14 @@ export function LandingPageClient() {
                 className="absolute -top-4 -right-4 flex items-center gap-1.5 rounded-lg border bg-background/95 px-3 py-1.5 text-xs font-semibold shadow-md"
               >
                 <TrendingUp className="size-3.5 text-emerald-600" />
-                <span>+38% Eficiência</span>
+                <span>+38% Produtividade</span>
               </motion.div>
 
               <div className="border-b border-border/40 pb-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold">Painel Operacional</h3>
-                    <p className="text-xs text-muted-foreground">Visão consolidada em tempo real</p>
+                    <h3 className="text-sm font-semibold">Visão Geral da Banca</h3>
+                    <p className="text-xs text-muted-foreground">Acompanhamento diário do escritório</p>
                   </div>
                   <div className="flex gap-1.5">
                     <span className="size-2.5 rounded-full bg-red-500/80" />
@@ -305,10 +313,10 @@ export function LandingPageClient() {
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {[
-                  { label: "Clientes Ativos", val: "142", desc: "Este mês (+12)" },
-                  { label: "Processos em Andamento", val: "57", desc: "3 atualizações hoje" },
-                  { label: "Audiências agendadas", val: "8", desc: "Próximos 7 dias" },
-                  { label: "Receita Faturada", val: "R$ 48.900", desc: "Meta mensal de 82%" },
+                  { label: "Clientes Atendidos", val: "142", desc: "Este mês (+12)" },
+                  { label: "Processos Ativos", val: "57", desc: "3 atualizações hoje" },
+                  { label: "Audiências Agendadas", val: "8", desc: "Próximos 7 dias" },
+                  { label: "Honorários Faturados", val: "R$ 48.900", desc: "Meta mensal de 82%" },
                 ].map((card, i) => (
                   <motion.div
                     key={card.label}
@@ -331,18 +339,18 @@ export function LandingPageClient() {
                 transition={{ delay: 0.8 }}
                 className="mt-6 rounded-xl border border-border/40 bg-muted/20 p-4"
               >
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prazos e Alertas Importantes</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Próximos Compromissos e Prazos Limite</p>
                 <div className="mt-3.5 space-y-3 text-xs">
                   <div className="flex items-center justify-between border-b border-border/30 pb-2">
                     <span className="font-medium">Contestação - Ação de Cobrança</span>
                     <span className="rounded bg-rose-500/10 px-1.5 py-0.5 font-semibold text-rose-600">Hoje</span>
                   </div>
                   <div className="flex items-center justify-between border-b border-border/30 pb-2">
-                    <span className="font-medium">Protocolo - Apelação Cível</span>
+                    <span className="font-medium">Apelação Cível - TJSP</span>
                     <span className="rounded bg-amber-500/10 px-1.5 py-0.5 font-semibold text-amber-600">Amanhã</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Audiência de Conciliação</span>
+                    <span className="font-medium">Audiência de Conciliação - 2ª Vara</span>
                     <span className="text-muted-foreground">Sexta às 14h</span>
                   </div>
                 </div>
@@ -361,9 +369,9 @@ export function LandingPageClient() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto space-y-4 mb-16"
         >
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Uma suíte completa para escritórios de alto padrão</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Tudo o que seu escritório precisa em um único lugar</h2>
           <p className="text-muted-foreground">
-            Elimine planilhas paralelas e sistemas desconexos. Tenha controle completo de ponta a ponta.
+            Elimine o uso de planilhas soltas e múltiplos sistemas. Tenha controle total da banca com clareza e agilidade.
           </p>
         </motion.div>
 
@@ -431,25 +439,25 @@ export function LandingPageClient() {
             className="max-w-2xl"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Sobre o Alfenus</p>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Tecnologia com respeito pela tradição jurídica.</h2>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Tecnologia desenhada com respeito à tradição jurídica.</h2>
             <p className="mt-6 text-base leading-relaxed text-muted-foreground">
-              O Alfenus nasceu para aproximar duas realidades que precisam trabalhar juntas: o rigor do Direito e a agilidade de uma operação moderna. Criamos uma plataforma para que escritórios tenham mais clareza sobre seus clientes, processos, prazos e decisões, sem perder o cuidado com o sigilo e a responsabilidade profissional.
+              O Alfenus nasceu para resolver o principal desafio dos escritórios modernos: a sobrecarga com rotinas administrativas repetitivas. Desenvolvemos uma plataforma que organiza a rotina do seu escritório, trazendo clareza para a tomada de decisões e garantindo o sigilo que a profissão exige.
             </p>
             <div className="mt-8 grid gap-6 border-t border-border/60 pt-8 sm:grid-cols-3">
               <div>
                 <Compass className="size-5 text-primary" />
                 <p className="mt-3 font-semibold">Direção</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Menos dispersão. Mais foco no trabalho que importa.</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Menos dispersão. Mais foco na tese jurídica e no trabalho que importa.</p>
               </div>
               <div>
                 <LockKeyhole className="size-5 text-primary" />
                 <p className="mt-3 font-semibold">Confiança</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Dados tratados com privacidade, contexto e responsabilidade.</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Dados dos clientes tratados com sigilo, contexto e responsabilidade.</p>
               </div>
               <div>
                 <Scale className="size-5 text-primary" />
                 <p className="mt-3 font-semibold">Equilíbrio</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Automação para a rotina, discernimento para as decisões.</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Automação para a rotina burocrática, discernimento para as decisões.</p>
               </div>
             </div>
             <div className="mt-8 rounded-xl border border-primary/15 bg-background/70 p-5">
@@ -472,8 +480,8 @@ export function LandingPageClient() {
             transition={{ duration: 0.5 }}
             className="text-center max-w-2xl mx-auto mb-16"
           >
-            <h2 className="text-2xl font-bold tracking-tight">O que dizem os grandes escritórios</h2>
-            <p className="mt-2 text-sm text-muted-foreground">A confiança de quem usa a nossa tecnologia no dia a dia da advocacia.</p>
+            <h2 className="text-2xl font-bold tracking-tight">O que dizem os advogados que utilizam o Alfenus</h2>
+            <p className="mt-2 text-sm text-muted-foreground">A aprovação de bancas e profissionais que prezam pela excelência e organização.</p>
           </motion.div>
 
           <div className="grid gap-8 md:grid-cols-2 max-w-5xl mx-auto">
@@ -515,7 +523,7 @@ export function LandingPageClient() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl font-bold tracking-tight">Perguntas Frequentes</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Tire suas principais dúvidas sobre o Alfenus.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Respostas para as principais dúvidas dos advogados.</p>
         </motion.div>
 
         <div className="space-y-4">
@@ -579,10 +587,10 @@ export function LandingPageClient() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:flex lg:items-center lg:justify-between lg:px-8">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Pronto para elevar o nível do seu escritório?
+              Pronto para transformar a gestão do seu escritório?
             </h2>
             <p className="mt-3 text-base text-muted-foreground">
-              Cadastre-se hoje e ganhe 14 dias de teste grátis. Configuração rápida em menos de 5 minutos.
+              Experimente gratuitamente por 14 dias sem compromisso. Comece a organizar sua banca em poucos minutos.
             </p>
           </div>
           <div className="mt-8 flex gap-3 lg:mt-0 lg:flex-shrink-0">
@@ -601,7 +609,7 @@ export function LandingPageClient() {
                 id="consult-footer-btn"
                 className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-6 text-sm font-semibold transition hover:bg-muted"
               >
-                Falar com Consultor
+                Acessar o Sistema
               </Link>
             </motion.div>
           </div>
