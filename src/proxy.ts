@@ -32,8 +32,6 @@ const protectedRoutes = [
   "/onboarding",
 ];
 
-const publicRoutes = ["/entrar", "/cadastrar", "/recuperar-senha", "/convite", "/"];
-
 export function proxy(request: NextRequest) {
   if (!hasSupabaseEnv()) {
     return addSecurityHeaders(NextResponse.next());
@@ -69,10 +67,6 @@ export function proxy(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
-
   // O @supabase/ssr grava a sessão em sb-<project-ref>-auth-token.
   // O valor pode ser dividido em vários cookies, por isso verificamos o prefixo.
   const hasSession = request.cookies.getAll().some(
@@ -83,13 +77,6 @@ export function proxy(request: NextRequest) {
   if (isProtectedRoute && !hasSession) {
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";
-    return addSecurityHeaders(NextResponse.redirect(url));
-  }
-
-  // Redirecionar para dashboard se logado e tentando acessar login/cadastro
-  if (isPublicRoute && hasSession && pathname !== "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
     return addSecurityHeaders(NextResponse.redirect(url));
   }
 
