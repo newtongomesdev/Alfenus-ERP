@@ -60,7 +60,7 @@ export default async function AdminUsersPage({
                       </Link>
                     </TableCell>
                     <TableCell>{user.membershipCount}</TableCell>
-                    <TableCell>{user.memberships.map((m) => m.role).join(", ")}</TableCell>
+                    <TableCell>{user.memberships.length > 0 ? user.memberships.map((m) => m.role).join(", ") : "Sem escritório"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -253,26 +253,35 @@ export async function getAdminUsers(
   limit: number,
   search?: string
 ): Promise<{ users: AdminUser[]; totalCount: number }> {
-  // Get all distinct user_ids from law_firm_members
-  const { data: allMembers } = await adminClient
+  const { data: authData, error: authError } = await adminClient.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  if (authError) throw new Error(`Falha ao carregar usuários: ${authError.message}`);
+
+  const { data: allMembers, error: membersError } = await adminClient
     .from("law_firm_members")
     .select("user_id, law_firm_id, name, email, role, status");
+  if (membersError) throw new Error(`Falha ao carregar vínculos de usuários: ${membersError.message}`);
 
-  // Group by user_id
+  // Auth é a fonte de verdade: contas sem escritório ainda precisam aparecer no admin.
   const userMap = new Map<string, AdminUser>();
+  for (const authUser of authData.users) {
+    userMap.set(authUser.id, {
+      id: authUser.id,
+      email: authUser.email ?? "Sem e-mail",
+      createdAt: authUser.created_at,
+      lastSignInAt: authUser.last_sign_in_at ?? null,
+      emailConfirmedAt: authUser.email_confirmed_at ?? null,
+      membershipCount: 0,
+      memberships: [],
+    });
+  }
+
   for (const m of allMembers ?? []) {
-    if (!userMap.has(m.user_id)) {
-      userMap.set(m.user_id, {
-        id: m.user_id,
-        email: m.email,
-        createdAt: "",
-        lastSignInAt: null,
-        emailConfirmedAt: null,
-        membershipCount: 0,
-        memberships: [],
-      });
-    }
-    const user = userMap.get(m.user_id)!;
+    const user = userMap.get(m.user_id);
+    if (!user) continue;
+
     user.membershipCount++;
     user.memberships.push({
       lawFirmId: m.law_firm_id,
@@ -298,7 +307,7 @@ export async function getAdminUsers(
   }
 
   // Filter by search
-  let users = [...userMap.values()];
+  let users = [...userMap.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   if (search) {
     const q = search.toLowerCase();
     users = users.filter((u) => u.email.toLowerCase().includes(q) || u.memberships.some((m) => m.lawFirmName.toLowerCase().includes(q)));
@@ -315,26 +324,28 @@ export async function getAdminUserDetail(
   adminClient: AdminClient,
   userId: string
 ): Promise<AdminUser | null> {
-  const { data: memberships } = await adminClient
+  const { data: authData, error: authError } = await adminClient.auth.admin.getUserById(userId);
+  if (authError || !authData.user) return null;
+
+  const { data: memberships, error: membersError } = await adminClient
     .from("law_firm_members")
     .select("user_id, law_firm_id, name, email, role, status, last_access_at, created_at")
     .eq("user_id", userId);
+  if (membersError) throw new Error(`Falha ao carregar vínculos do usuário: ${membersError.message}`);
 
-  if (!memberships || memberships.length === 0) return null;
-
-  const first = memberships[0];
-  const firmIds = [...new Set(memberships.map((m) => m.law_firm_id))];
+  const memberList = memberships ?? [];
+  const firmIds = [...new Set(memberList.map((m) => m.law_firm_id))];
   const { data: firms } = await adminClient.from("law_firms").select("id, name, plan").in("id", firmIds);
   const firmNames = new Map((firms ?? []).map((f) => [f.id, f.name]));
 
   return {
     id: userId,
-    email: first.email,
-    createdAt: first.created_at,
-    lastSignInAt: null,
-    emailConfirmedAt: null,
-    membershipCount: memberships.length,
-    memberships: memberships.map((m) => ({
+    email: authData.user.email ?? "Sem e-mail",
+    createdAt: authData.user.created_at,
+    lastSignInAt: authData.user.last_sign_in_at ?? null,
+    emailConfirmedAt: authData.user.email_confirmed_at ?? null,
+    membershipCount: memberList.length,
+    memberships: memberList.map((m) => ({
       lawFirmId: m.law_firm_id,
       lawFirmName: firmNames.get(m.law_firm_id) ?? "Escritório",
       role: m.role,
@@ -406,11 +417,12 @@ export async function getAdminAuditLogs(
 export async function getAdminPlatformMetrics(
   adminClient: AdminClient
 ): Promise<AdminPlatformMetrics> {
-  const [firmsResult, membersResult, docsResult] = await Promise.all([
+  const [firmsResult, docsResult, authUsersResult] = await Promise.all([
     adminClient.from("law_firms").select("id, status, created_at"),
-    adminClient.from("law_firm_members").select("id"),
     adminClient.from("documents").select("id", { count: "exact", head: true }),
+    adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 }),
   ]);
+  if (authUsersResult.error) throw new Error(`Falha ao carregar total de usuários: ${authUsersResult.error.message}`);
 
   const firms = firmsResult.data ?? [];
   const now = new Date();
@@ -428,7 +440,7 @@ export async function getAdminPlatformMetrics(
     totalTenants: firms.length,
     activeTenants: firms.filter((f) => f.status === "ativo").length,
     suspendedTenants: firms.filter((f) => f.status === "suspenso").length,
-    totalUsers: (membersResult.data ?? []).length,
+    totalUsers: authUsersResult.data.users.length,
     tenantsThisMonth: firms.filter((f) => f.created_at?.startsWith(thisMonth)).length,
     totalDocuments: docsResult.count ?? 0,
     tenantsByMonth,

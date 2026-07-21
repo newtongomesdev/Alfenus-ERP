@@ -50,7 +50,13 @@ export default async function AdminUserDetailPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {detail.memberships.map((m) => (
+                {detail.memberships.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                      Esta conta ainda não está vinculada a um escritório.
+                    </TableCell>
+                  </TableRow>
+                ) : detail.memberships.map((m) => (
                   <TableRow key={m.lawFirmId}>
                     <TableCell>
                       <Link href={`/admin/escritorios/${m.lawFirmId}`} className="font-medium underline-offset-4 hover:underline">
