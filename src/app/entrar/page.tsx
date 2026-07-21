@@ -10,7 +10,9 @@ import { PasswordInput } from "@/components/password-input";
 
 const errorMessages: Record<string, string> = {
   ambiente: "Configure as variáveis do Supabase antes de entrar.",
+  confirmacao: "O link de confirmação expirou ou já foi utilizado. Solicite um novo acesso.",
   credenciais: "E-mail ou senha incorretos. Por favor, tente novamente.",
+  acesso: "Não foi possível verificar o acesso ao escritório. Tente novamente.",
   magic_email: "Informe seu e-mail para receber o link de acesso.",
   magic_link: "Não foi possível enviar o link de acesso. Verifique o e-mail e tente novamente.",
 };

@@ -1,5 +1,6 @@
 import { CalendarDays, Database, LogIn, Plus, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { OverviewChart } from "@/components/dashboard/overview-chart";
 import { KPICards } from "@/components/dashboard/kpi-cards";
@@ -87,10 +88,18 @@ export default async function Home() {
     };
   }
 
+  if (overview.status === "signed-out") {
+    redirect("/entrar");
+  }
+
+  if (overview.status === "missing-tenant") {
+    redirect("/onboarding");
+  }
+
   return (
     <AppShell
       memberName={overview.memberName}
-      isAuthenticated={overview.status !== "signed-out" && overview.status !== "missing-env"}
+      isAuthenticated={overview.status === "ready"}
     >
       <div className="space-y-6">
         <PageHeader

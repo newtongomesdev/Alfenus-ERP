@@ -26,13 +26,16 @@ export async function signUpAction(formData: FormData) {
     redirect("/cadastrar?erro=ambiente");
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") || "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (!appUrl) {
+    redirect("/cadastrar?erro=ambiente");
+  }
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { name, privacy_policy_version: "1.0", privacy_accepted_at: new Date().toISOString() },
-      emailRedirectTo: `${appUrl}/onboarding`,
+      emailRedirectTo: `${appUrl}/auth/callback`,
     },
   });
 

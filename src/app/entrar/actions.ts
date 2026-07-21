@@ -31,6 +31,24 @@ export async function signInAction(formData: FormData) {
       .from("law_firm_members")
       .update({ last_access_at: new Date().toISOString() })
       .eq("user_id", sessionData.user.id);
+
+    const { data: activeMembership, error: membershipError } = await supabase
+      .from("law_firm_members")
+      .select("id")
+      .eq("user_id", sessionData.user.id)
+      .eq("status", "ativo")
+      .limit(1)
+      .maybeSingle();
+
+    if (membershipError) {
+      redirect("/entrar?erro=acesso");
+    }
+
+    if (!activeMembership) {
+      redirect("/onboarding");
+    }
+  } else {
+    redirect("/entrar?erro=acesso");
   }
 
   redirect("/dashboard");
@@ -51,10 +69,13 @@ export async function sendMagicLinkAction(formData: FormData) {
     redirect("/entrar?erro=ambiente");
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") || "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (!appUrl) {
+    redirect("/entrar?erro=ambiente");
+  }
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${appUrl}/onboarding` },
+    options: { emailRedirectTo: `${appUrl}/auth/callback`, shouldCreateUser: false },
   });
 
   if (error) {
