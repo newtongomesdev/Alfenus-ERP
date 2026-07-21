@@ -36,9 +36,9 @@ export default async function DeadlineCalculationsPage({
   const page = Math.max(1, Number(params.page ?? 1));
   const PAGE_SIZE = 20;
 
-  let stats;
-  let calculations;
-  let total;
+  let stats: { total: number; byStatus: Record<string, number>; avgDaysToResolve: number };
+  let calculations: Awaited<ReturnType<typeof getCalculations>>["calculations"];
+  let total: number;
   try {
     [stats, { calculations, total }] = await Promise.all([
       getCalculationStats(context),
