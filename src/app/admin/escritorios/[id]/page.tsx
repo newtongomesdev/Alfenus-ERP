@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SuspendTenantButton, ReactivateTenantButton } from "@/components/admin/tenant-actions";
+import { TrialSection } from "./trial-section";
 
 export default async function AdminTenantDetailPage({
   params,
@@ -21,6 +22,13 @@ export default async function AdminTenantDetailPage({
 
   const detail = await getAdminTenantDetail(adminClient, id);
   if (!detail) redirect("/admin/escritorios");
+
+  // Fetch trial data from law_firms
+  const { data: trialFirm } = await adminClient
+    .from("law_firms")
+    .select("trial_starts_at, trial_ends_at, trial_used")
+    .eq("id", id)
+    .maybeSingle();
 
   return (
       <div className="space-y-6">
@@ -54,6 +62,19 @@ export default async function AdminTenantDetailPage({
           <MetricCard label="Pago" value={detail.totalPaidCents} format="currency" detail="Total recebido" />
           <MetricCard label="Pendente" value={detail.totalPendingCents} format="currency" detail="Em aberto" />
         </section>
+
+        <Card className="rounded-lg">
+          <CardContent className="pt-6">
+            <TrialSection
+              tenantId={detail.id}
+              trial={{
+                trialStartsAt: trialFirm?.trial_starts_at ?? null,
+                trialEndsAt: trialFirm?.trial_ends_at ?? null,
+                trialUsed: trialFirm?.trial_used ?? false,
+              }}
+            />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 xl:grid-cols-2">
           <Card className="rounded-lg">

@@ -52,16 +52,34 @@ export default async function ContractsPage({
 }: {
   searchParams: Promise<{ criado?: string; erro?: string; page?: string }>;
 }) {
-  const context = await getAppContext();
   const params = await searchParams;
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  if (context.status !== "ready" || !context.member || !context.lawFirm) {
-    return <ContractsUnavailable status={context.status} />;
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  let overview: Awaited<ReturnType<typeof getContractsOverview>>;
+
+  try {
+    context = await getAppContext();
+    if (context.status !== "ready" || !context.member || !context.lawFirm) {
+      return <ContractsUnavailable status={context.status} />;
+    }
+    overview = await getContractsOverview(context.lawFirm.id, page, PAGE_SIZE);
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Contratos" description="Honorários, contratos, parcelamentos e situação financeira." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Não foi possível carregar os contratos. Verifique a configuração do Supabase.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
 
-  const overview = await getContractsOverview(context.lawFirm.id, page, PAGE_SIZE);
   const canManageContracts = can(context.member.role, "contratos.gerenciar");
   const totalPages = Math.max(1, Math.ceil(overview.totalCount / PAGE_SIZE));
 

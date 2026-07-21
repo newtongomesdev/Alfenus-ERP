@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
-import { getProcesses } from "@/lib/processes/queries";
+import { getProcesses, type ProcessListItem } from "@/lib/processes/queries";
 
 function ProcessesUnavailable({ status }: { status: string }) {
   const message =
@@ -58,16 +58,37 @@ export default async function ProcessesPage({
 }: {
   searchParams: Promise<{ criado?: string; arquivado?: string; erro?: string; q?: string; page?: string }>;
 }) {
-  const context = await getAppContext();
   const params = await searchParams;
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  if (context.status !== "ready" || !context.member || !context.lawFirm) {
-    return <ProcessesUnavailable status={context.status} />;
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  let processes: ProcessListItem[] = [];
+  let totalCount = 0;
+
+  try {
+    context = await getAppContext();
+    if (context.status !== "ready" || !context.member || !context.lawFirm) {
+      return <ProcessesUnavailable status={context.status} />;
+    }
+    const result = await getProcesses(context.lawFirm.id, params.q, page, PAGE_SIZE);
+    processes = result.items;
+    totalCount = result.totalCount;
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Processos" description="Gestão de processos judiciais e casos extrajudiciais." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Não foi possível carregar os processos. Verifique a configuração do Supabase.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
 
-  const { items: processes, totalCount } = await getProcesses(context.lawFirm.id, params.q, page, PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const basePath = params.q ? `/processos?q=${encodeURIComponent(params.q)}` : "/processos";
   const canArchive = can(context.member.role, "processos.editar");

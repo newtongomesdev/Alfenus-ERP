@@ -27,13 +27,33 @@ function Unavailable({ status }: { status: string }) {
 const errorMessages: Record<string, string> = { ambiente: "Configure o Supabase para salvar prazos.", permissao: "Seu papel não tem permissão para esta operação.", validacao: "Revise os campos obrigatórios do prazo.", criacao: "Não foi possível criar o prazo.", atualizacao: "Não foi possível concluir o prazo." };
 
 export default async function DeadlinesPage({ searchParams }: { searchParams: Promise<{ criado?: string; concluido?: string; erro?: string; page?: string }> }) {
-  const context = await getAppContext();
   const params = await searchParams;
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
-  if (context.status !== "ready" || !context.member || !context.lawFirm) return <Unavailable status={context.status} />;
 
-  const [overview, options] = await Promise.all([getDeadlinesOverview(context.lawFirm.id, page, PAGE_SIZE), getDeadlineOptions(context.lawFirm.id)]);
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  let overview: Awaited<ReturnType<typeof getDeadlinesOverview>>;
+  let options: Awaited<ReturnType<typeof getDeadlineOptions>>;
+
+  try {
+    context = await getAppContext();
+    if (context.status !== "ready" || !context.member || !context.lawFirm) return <Unavailable status={context.status} />;
+    [overview, options] = await Promise.all([getDeadlinesOverview(context.lawFirm.id, page, PAGE_SIZE), getDeadlineOptions(context.lawFirm.id)]);
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Prazos" description="Controle datas limite, prioridades e conclusão das atividades jurídicas." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Não foi possível carregar os prazos. Verifique a configuração do Supabase.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
+  }
+
   const canCreate = can(context.member.role, "prazos.criar");
   const canComplete = can(context.member.role, "prazos.concluir");
   const today = new Date().toISOString().slice(0, 10);

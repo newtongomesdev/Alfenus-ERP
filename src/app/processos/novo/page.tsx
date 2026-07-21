@@ -55,14 +55,38 @@ export default async function NewProcessPage({
 }: {
   searchParams: Promise<{ erro?: string; clientId?: string }>;
 }) {
-  const context = await getAppContext();
   const params = await searchParams;
+
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  let clients: Array<{ id: string; name: string }> = [];
+
+  try {
+    context = await getAppContext();
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Novo processo" description="Cadastre processo judicial ou caso extrajudicial." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (context.status !== "ready" || !context.member || !context.lawFirm) {
     return <NewProcessUnavailable status={context.status} />;
   }
 
-  const { items: clients } = await getClients(context.lawFirm.id);
+  try {
+    const result = await getClients(context.lawFirm.id);
+    clients = result.items;
+  } catch {
+    clients = [];
+  }
   const errorMessage = params.erro ? errorMessages[params.erro] : null;
 
   return (

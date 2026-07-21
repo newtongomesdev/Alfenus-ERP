@@ -71,7 +71,21 @@ function SetupNotice({ status }: { status: string }) {
 }
 
 export default async function Home() {
-  const overview = await getDashboardOverview();
+  let overview;
+  try {
+    overview = await getDashboardOverview();
+  } catch {
+    overview = {
+      status: "missing-env" as const,
+      lawFirmName: null,
+      memberName: null,
+      metrics: [],
+      deadlines: [],
+      appointments: [],
+      activities: [],
+      chart: [],
+    };
+  }
 
   return (
     <AppShell

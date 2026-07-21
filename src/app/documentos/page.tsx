@@ -34,8 +34,23 @@ export default async function DocumentsPage({
 }: {
   searchParams: Promise<{ enviado?: string; excluido?: string; erro?: string }>;
 }) {
-  const context = await getAppContext();
   const params = await searchParams;
+
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  try {
+    context = await getAppContext();
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <PageHeader title="Documentos" description="Arquivos seguros por tenant." />
+        <Card className="rounded-lg border-dashed">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.
+          </CardContent>
+        </Card>
+      </AppShell>
+    );
+  }
 
   if (
     context.status !== "ready" ||
@@ -72,48 +87,70 @@ export default async function DocumentsPage({
     );
   }
 
-  const overview = await getModuleOverview(
-    context.lawFirm.id,
-    "documentos",
-    context.member.id,
-  );
-  const canDelete = can(context.member.role, "equipe.gerenciar");
-
-  const supabase = await getSupabaseServerClient();
-  const documentQuery = supabase
-    ? (
-        supabase as unknown as {
-          from(table: string): {
-            select(columns: string): {
-              eq(
-                column: string,
-                value: string,
-              ): {
-                order(
-                  column: string,
-                  options: { ascending: boolean },
-                ): Promise<{ data: unknown[] | null }>;
-              };
-            };
-          };
-        }
-      )
-        .from("documents")
-        .select("id, name, entity_type, entity_id, created_at")
-        .eq("law_firm_id", context.lawFirm.id)
-        .order("created_at", { ascending: false })
-    : null;
-
-  const { data: documents } = documentQuery
-    ? await documentQuery
-    : { data: [] as unknown[] };
-
-  const rows = (documents ?? []) as Array<{
+  let overview: Awaited<ReturnType<typeof getModuleOverview>>;
+  let rows: Array<{
     id: string;
     name: string;
     entity_type: string;
     entity_id: string | null;
   }>;
+
+  try {
+    overview = await getModuleOverview(
+      context.lawFirm.id,
+      "documentos",
+      context.member.id,
+    );
+
+    const supabase = await getSupabaseServerClient();
+    const documentQuery = supabase
+      ? (
+          supabase as unknown as {
+            from(table: string): {
+              select(columns: string): {
+                eq(
+                  column: string,
+                  value: string,
+                ): {
+                  order(
+                    column: string,
+                    options: { ascending: boolean },
+                  ): Promise<{ data: unknown[] | null }>;
+                };
+              };
+            };
+          }
+        )
+          .from("documents")
+          .select("id, name, entity_type, entity_id, created_at")
+          .eq("law_firm_id", context.lawFirm.id)
+          .order("created_at", { ascending: false })
+      : null;
+
+    const { data: documents } = documentQuery
+      ? await documentQuery
+      : { data: [] as unknown[] };
+
+    rows = (documents ?? []) as Array<{
+      id: string;
+      name: string;
+      entity_type: string;
+      entity_id: string | null;
+    }>;
+  } catch {
+    return (
+      <AppShell memberName={context.member.name}>
+        <PageHeader title="Documentos" description="Arquivos seguros por tenant." />
+        <Card className="rounded-lg border-dashed">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Ocorreu um erro ao carregar os documentos. Tente novamente mais tarde.
+          </CardContent>
+        </Card>
+      </AppShell>
+    );
+  }
+
+  const canDelete = can(context.member.role, "equipe.gerenciar");
 
   return (
     <AppShell memberName={context.member.name}>

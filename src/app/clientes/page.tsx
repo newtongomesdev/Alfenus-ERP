@@ -8,7 +8,7 @@ import { Pagination } from "@/components/pagination";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getAppContext } from "@/lib/auth/context";
-import { getClients } from "@/lib/clients/queries";
+import { getClients, type ClientListItem } from "@/lib/clients/queries";
 
 function ClientsUnavailable({ status }: { status: string }) {
   const message =
@@ -47,16 +47,37 @@ export default async function ClientsPage({
 }: {
   searchParams: Promise<{ criado?: string; q?: string; page?: string }>;
 }) {
-  const context = await getAppContext();
   const params = await searchParams;
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
 
-  if (context.status !== "ready" || !context.member || !context.lawFirm) {
-    return <ClientsUnavailable status={context.status} />;
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  let clients: ClientListItem[] = [];
+  let totalCount = 0;
+
+  try {
+    context = await getAppContext();
+    if (context.status !== "ready" || !context.member || !context.lawFirm) {
+      return <ClientsUnavailable status={context.status} />;
+    }
+    const result = await getClients(context.lawFirm.id, params.q, page, PAGE_SIZE);
+    clients = result.items;
+    totalCount = result.totalCount;
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Clientes" description="Cadastro completo e separado de contratos, processos e financeiro." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Não foi possível carregar os clientes. Verifique a configuração do Supabase.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
 
-  const { items: clients, totalCount } = await getClients(context.lawFirm.id, params.q, page, PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const basePath = params.q ? `/clientes?q=${encodeURIComponent(params.q)}` : "/clientes";
 

@@ -53,8 +53,25 @@ export default async function NewLeadPage({
 }: {
   searchParams: Promise<{ erro?: string }>;
 }) {
-  const context = await getAppContext();
   const params = await searchParams;
+
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  try {
+    context = await getAppContext();
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Novo lead" description="Cadastre uma oportunidade comercial." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (context.status !== "ready" || !context.member || !context.lawFirm) {
     return <NewLeadUnavailable status={context.status} />;

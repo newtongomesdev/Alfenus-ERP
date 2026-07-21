@@ -48,16 +48,34 @@ export default async function LeadsPage({
 }: {
   searchParams: Promise<{ criado?: string; convertido?: string; erro?: string; q?: string; page?: string }>;
 }) {
-  const context = await getAppContext();
+  let context: Awaited<ReturnType<typeof getAppContext>>;
   const params = await searchParams;
   const PAGE_SIZE = 20;
   const page = Math.max(1, Number(params.page ?? 1));
-
-  if (context.status !== "ready" || !context.member || !context.lawFirm) {
-    return <LeadsUnavailable status={context.status} />;
+  let leads: Array<{ id: string; name: string; interest: string | null; source: string | null; funnelStage: string; estimatedValueCents: number; nextContactAt: string | null; status: string; convertedClientId: string | null; whatsapp: string | null; phone: string | null; email: string | null; createdAt: string }> = [];
+  let totalCount = 0;
+  try {
+    context = await getAppContext();
+    if (context.status !== "ready" || !context.member || !context.lawFirm) {
+      return <LeadsUnavailable status={context.status} />;
+    }
+    const result = await getLeads(context.lawFirm.id, params.q, page, PAGE_SIZE);
+    leads = result.items;
+    totalCount = result.totalCount;
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Leads" description="Captação, qualificação e conversão de oportunidades em clientes." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Não foi possível carregar os leads. Verifique a configuração do Supabase.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
-
-  const { items: leads, totalCount } = await getLeads(context.lawFirm.id, params.q, page, PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const basePath = params.q ? `/leads?q=${encodeURIComponent(params.q)}` : "/leads";
 

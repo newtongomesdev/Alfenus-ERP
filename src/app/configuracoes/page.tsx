@@ -112,7 +112,22 @@ export default async function SettingsPage({
 }: {
   searchParams: Promise<{ erro?: string; mensagem?: string }>;
 }) {
-  const context = await getAppContext();
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  try {
+    context = await getAppContext();
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <PageHeader title="Configurações" description="Escritório, membros, papéis e preferências do Alfenus." />
+        <Card className="rounded-lg border-dashed">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.
+          </CardContent>
+        </Card>
+      </AppShell>
+    );
+  }
+
   const params = await searchParams;
   const successMessage = params.mensagem === "salvo" ? "Dados do escritório atualizados com sucesso." : null;
   const errorMessage = params.erro
@@ -130,12 +145,30 @@ export default async function SettingsPage({
     return <EmptyConfigurationState status={context.status} />;
   }
 
-  const members = await getLawFirmMembers(context.lawFirm.id);
+  let members: Awaited<ReturnType<typeof getLawFirmMembers>>;
+  let logoUrlData: { signedUrl?: string } | null = null;
+
+  try {
+    members = await getLawFirmMembers(context.lawFirm.id);
+    const supabase = await getSupabaseServerClient();
+    const { data: signedData } = context.lawFirm.logoPath && supabase
+      ? await supabase.storage.from("branding").createSignedUrl(context.lawFirm.logoPath, 3600)
+      : { data: null };
+    logoUrlData = signedData;
+  } catch {
+    return (
+      <AppShell memberName={context.member.name}>
+        <PageHeader title="Configurações" description="Escritório, membros, papéis e preferências do Alfenus." />
+        <Card className="rounded-lg border-dashed">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Ocorreu um erro ao carregar as configurações. Tente novamente mais tarde.
+          </CardContent>
+        </Card>
+      </AppShell>
+    );
+  }
+
   const canEdit = can(context.member.role, "configuracoes.administrar");
-  const supabase = await getSupabaseServerClient();
-  const { data: logoUrlData } = context.lawFirm.logoPath && supabase
-    ? await supabase.storage.from("branding").createSignedUrl(context.lawFirm.logoPath, 3600)
-    : { data: null };
 
   return (
     <AppShell memberName={context.member.name}>

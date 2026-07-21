@@ -22,7 +22,15 @@ const adminNavItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Escritórios", href: "/admin/escritorios", icon: Building2 },
   { label: "Usuários", href: "/admin/usuarios", icon: Users },
-  { label: "Planos", href: "/admin/planos", icon: CreditCard },
+  {
+    label: "Planos",
+    href: "/admin/planos",
+    icon: CreditCard,
+    children: [
+      { label: "Limites", href: "/admin/planos/limites" },
+      { label: "Recursos", href: "/admin/planos/recursos" },
+    ],
+  },
   { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag },
   { label: "Anúncios", href: "/admin/anuncios", icon: Megaphone },
   { label: "Logs", href: "/admin/logs", icon: ScrollText },
@@ -46,19 +54,41 @@ export function AdminSidebar() {
           const isActive = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex h-9 items-center gap-3 rounded-md px-2 text-sm transition",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            <div key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex h-9 items-center gap-3 rounded-md px-2 text-sm transition",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <Icon className="size-4" />
+                <span>{item.label}</span>
+              </Link>
+              {"children" in item && item.children && isActive && (
+                <div className="ml-6 mt-0.5 space-y-0.5">
+                  {item.children.map((child) => {
+                    const childActive = pathname.startsWith(child.href);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className={cn(
+                          "flex h-8 items-center gap-3 rounded-md px-2 text-sm transition",
+                          childActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        )}
+                      >
+                        <span>{child.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <Icon className="size-4" />
-              <span>{item.label}</span>
-            </Link>
+            </div>
           );
         })}
       </nav>

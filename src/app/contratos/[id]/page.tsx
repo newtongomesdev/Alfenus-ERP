@@ -26,14 +26,47 @@ export default async function ContractDetailPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const context = await getAppContext();
+
+  let context: Awaited<ReturnType<typeof getAppContext>>;
+  try {
+    context = await getAppContext();
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <PageHeader title="Contrato" description="Detalhes do contrato." />
+        <Card className="rounded-lg border-dashed">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.
+          </CardContent>
+        </Card>
+      </AppShell>
+    );
+  }
 
   if (context.status !== "ready" || !context.member || !context.lawFirm) {
     redirect("/entrar");
   }
 
-  const contract = await getContractDetails(context.lawFirm.id, id);
-  const financialSummary = await getFinancialSummaryByContract(context.lawFirm.id, id);
+  let contract: Awaited<ReturnType<typeof getContractDetails>>;
+  let financialSummary: Awaited<ReturnType<typeof getFinancialSummaryByContract>>;
+
+  try {
+    contract = await getContractDetails(context.lawFirm.id, id);
+    financialSummary = await getFinancialSummaryByContract(context.lawFirm.id, id);
+  } catch {
+    return (
+      <AppShell memberName={context.member.name}>
+        <div className="space-y-6">
+          <PageHeader title="Contrato" description="Detalhes do contrato." />
+          <Card className="rounded-lg border-dashed">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Ocorreu um erro ao carregar os detalhes do contrato. Tente novamente mais tarde.
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!contract) {
     return (

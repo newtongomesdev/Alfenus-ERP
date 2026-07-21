@@ -5,11 +5,31 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ToggleFeatureButton } from "./toggle-button";
+import { TenantOverridesPanel } from "./tenant-overrides-panel";
 import { createFeatureFlagAction } from "./actions";
 
 export default async function AdminFeatureFlagsPage() {
   const { adminClient } = await getAdminContext();
   const flags = await getAllFeatureFlags();
+
+  // Fetch all tenants for override display
+  const { data: lawFirms } = await adminClient
+    .from("law_firms")
+    .select("id, name")
+    .order("name");
+
+  // Fetch all overrides
+  const { data: allOverrides } = await adminClient
+    .from("feature_flag_overrides")
+    .select("flag_id, law_firm_id, enabled");
+
+  const tenants = (lawFirms ?? []).map((f) => ({ id: f.id, name: f.name }));
+  const overridesByFlag = new Map<string, Array<{ lawFirmId: string; enabled: boolean }>>();
+  for (const o of allOverrides ?? []) {
+    const list = overridesByFlag.get(o.flag_id) ?? [];
+    list.push({ lawFirmId: o.law_firm_id, enabled: o.enabled });
+    overridesByFlag.set(o.flag_id, list);
+  }
 
   return (
     <div className="space-y-6">
@@ -30,22 +50,34 @@ export default async function AdminFeatureFlagsPage() {
             </TableHeader>
             <TableBody>
               {flags.map((flag) => (
-                <TableRow key={flag.id}>
-                  <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{flag.key}</code></TableCell>
-                  <TableCell className="font-medium">{flag.name}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm max-w-xs truncate">{flag.description ?? "—"}</TableCell>
-                  <TableCell>{flag.isGlobal ? <Badge variant="secondary">Global</Badge> : <Badge variant="outline">Tenant</Badge>}</TableCell>
-                  <TableCell>
-                    {flag.enabledByDefault ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">Ativo</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-muted-foreground">Inativo</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ToggleFeatureButton flagId={flag.id} flagKey={flag.key} initialEnabled={flag.enabledByDefault} />
-                  </TableCell>
-                </TableRow>
+                <>
+                  <TableRow key={flag.id}>
+                    <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{flag.key}</code></TableCell>
+                    <TableCell className="font-medium">{flag.name}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm max-w-xs truncate">{flag.description ?? "—"}</TableCell>
+                    <TableCell>{flag.isGlobal ? <Badge variant="secondary">Global</Badge> : <Badge variant="outline">Tenant</Badge>}</TableCell>
+                    <TableCell>
+                      {flag.enabledByDefault ? (
+                        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">Ativo</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground">Inativo</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ToggleFeatureButton flagId={flag.id} flagKey={flag.key} initialEnabled={flag.enabledByDefault} />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow key={`${flag.id}-overrides`}>
+                    <TableCell colSpan={6} className="p-0">
+                      <TenantOverridesPanel
+                        flagId={flag.id}
+                        flagKey={flag.key}
+                        tenants={tenants}
+                        overrides={overridesByFlag.get(flag.id) ?? []}
+                      />
+                    </TableCell>
+                  </TableRow>
+                </>
               ))}
               {flags.length === 0 && (
                 <TableRow>

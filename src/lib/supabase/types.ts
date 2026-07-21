@@ -16,6 +16,9 @@ export type Database = {
           plan: string;
           status: string;
           settings: Json;
+          trial_starts_at: string | null;
+          trial_ends_at: string | null;
+          trial_used: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -31,6 +34,9 @@ export type Database = {
           plan?: string;
           status?: string;
           settings?: Json;
+          trial_starts_at?: string | null;
+          trial_ends_at?: string | null;
+          trial_used?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,6 +52,9 @@ export type Database = {
           plan?: string;
           status?: string;
           settings?: Json;
+          trial_starts_at?: string | null;
+          trial_ends_at?: string | null;
+          trial_used?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -986,6 +995,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      tenant_limit_overrides: {
+        Row: {
+          id: string;
+          law_firm_id: string;
+          limit_key: string;
+          override_value: number;
+          reason: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          law_firm_id: string;
+          limit_key: string;
+          override_value: number;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          law_firm_id?: string;
+          limit_key?: string;
+          override_value?: number;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       client_portal_invites: {
         Row: {
           id: string;
@@ -1706,6 +1748,45 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      admin_audit_logs: {
+        Row: {
+          id: string;
+          admin_user_id: string;
+          admin_email: string;
+          action: string;
+          entity_type: string;
+          entity_id: string | null;
+          entity_name: string | null;
+          details: Record<string, unknown>;
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_user_id: string;
+          admin_email: string;
+          action: string;
+          entity_type: string;
+          entity_id?: string | null;
+          entity_name?: string | null;
+          details?: Record<string, unknown>;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          admin_user_id?: string;
+          admin_email?: string;
+          action?: string;
+          entity_type?: string;
+          entity_id?: string | null;
+          entity_name?: string | null;
+          details?: Record<string, unknown>;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       security_policies: {
         Row: {
