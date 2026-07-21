@@ -49,6 +49,28 @@ const labelByStatus: Record<string, string> = {
   // Expense statuses
   expirado: "Expirado",
   aceito: "Aceito",
+  // Financial statuses
+  aprovado: "Aprovado",
+  rejeitado: "Rejeitado",
+  gerado: "Gerado",
+  revisado: "Revisado",
+  // CLM statuses
+  solicitacao: "Solicitação",
+  triagem: "Triagem",
+  minuta: "Minuta",
+  revisao: "Revisão",
+  negociacao: "Negociação",
+  aprovacao: "Aprovação",
+  assinatura_pendente: "Assinatura pendente",
+  renovacao: "Renovação",
+  encerramento: "Encerramento",
+  rescindido: "Rescindido",
+  // Obligation statuses
+  concluida: "Concluída",
+  isenta: "Isenta",
+  pendente_aprovacao: "Pendente aprovação",
+  // Scheduling statuses
+  confirmado: "Confirmado",
 };
 
 export function StatusBadge({ value }: { value: string }) {

@@ -36,7 +36,7 @@ const publicRoutes = ["/entrar", "/cadastrar", "/recuperar-senha", "/convite", "
 
 export function proxy(request: NextRequest) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
   const { pathname } = request.nextUrl;
@@ -48,7 +48,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/favicon") ||
     pathname.includes(".")
   ) {
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
   // Admin route protection
@@ -58,12 +58,12 @@ export function proxy(request: NextRequest) {
     );
 
     if (!hasSession) {
-      return NextResponse.redirect(new URL("/entrar", request.url));
+      return addSecurityHeaders(NextResponse.redirect(new URL("/entrar", request.url)));
     }
 
     // The server-side admin guard calls auth.getUser(). Do not inspect a
     // possibly chunked or stale JWT here, especially after role changes.
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
   const isProtectedRoute = protectedRoutes.some(
@@ -83,17 +83,26 @@ export function proxy(request: NextRequest) {
   if (isProtectedRoute && !hasSession) {
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";
-    return NextResponse.redirect(url);
+    return addSecurityHeaders(NextResponse.redirect(url));
   }
 
   // Redirecionar para dashboard se logado e tentando acessar login/cadastro
   if (isPublicRoute && hasSession && pathname !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    return addSecurityHeaders(NextResponse.redirect(url));
   }
 
-  return NextResponse.next();
+  return addSecurityHeaders(NextResponse.next());
+}
+
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  return response;
 }
 
 export const config = {

@@ -10,11 +10,15 @@ export function MetricCard({
   detail,
 }: {
   label: string;
-  value: number;
-  format: "integer" | "currency";
+  value: number | string;
+  format?: "integer" | "currency";
   detail: string;
 }) {
-  const formattedValue = format === "currency" ? formatCurrencyFromCents(value) : integerFormatter.format(value);
+  const formattedValue = typeof value === "string"
+    ? value
+    : format === "currency"
+      ? formatCurrencyFromCents(value)
+      : integerFormatter.format(value);
 
   return (
     <Card className="rounded-lg">

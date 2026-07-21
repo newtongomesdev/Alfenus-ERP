@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -34,9 +34,17 @@ export default async function AdminTenantDetailPage({
           title={detail.name}
           description={`${detail.slug} · ${detail.plan}`}
           actions={
-            detail.status === "ativo"
-              ? <SuspendTenantButton tenantId={detail.id} />
-              : <ReactivateTenantButton tenantId={detail.id} />
+            <div className="flex gap-2">
+              <Link
+                href={`/admin/acesso-assistido/${detail.id}`}
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm font-medium transition hover:bg-accent"
+              >
+                <Eye className="size-4" /> Acesso Assistido
+              </Link>
+              {detail.status === "ativo"
+                ? <SuspendTenantButton tenantId={detail.id} />
+                : <ReactivateTenantButton tenantId={detail.id} />}
+            </div>
           }
         />
 

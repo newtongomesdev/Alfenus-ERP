@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { can, permissions, roles, type Role } from "./permissions";
 
 describe("permissions", () => {
-  it("contém 24 permissões", () => {
-    expect(permissions).toHaveLength(24);
+  it("contém 28 permissões", () => {
+    expect(permissions).toHaveLength(28);
   });
 
   it("contém 7 roles", () => {

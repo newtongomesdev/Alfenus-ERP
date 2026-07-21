@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
+  BarChart3,
   Building2,
+  Flag,
   HeartPulse,
   Bot,
   CreditCard,
   LayoutDashboard,
+  Megaphone,
   ScrollText,
   Users,
 } from "lucide-react";
@@ -20,8 +23,11 @@ const adminNavItems = [
   { label: "Escritórios", href: "/admin/escritorios", icon: Building2 },
   { label: "Usuários", href: "/admin/usuarios", icon: Users },
   { label: "Planos", href: "/admin/planos", icon: CreditCard },
+  { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag },
+  { label: "Anúncios", href: "/admin/anuncios", icon: Megaphone },
   { label: "Logs", href: "/admin/logs", icon: ScrollText },
   { label: "Saúde", href: "/admin/saude", icon: HeartPulse },
+  { label: "Uso", href: "/admin/uso", icon: BarChart3 },
   { label: "IA e RAG", href: "/admin/ia", icon: Bot },
 ];
 
