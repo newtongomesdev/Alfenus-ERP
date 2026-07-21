@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { lawFirmSchema } from "@/lib/validations/foundation";
+import { recordErrorEvent } from "@/lib/observability/error-events";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { toSlug } from "@/lib/slug";
 
@@ -65,6 +66,14 @@ export async function createLawFirmAction(formData: FormData) {
   });
 
   if (error) {
+    await recordErrorEvent({
+      source: "server",
+      message: error.message || "Falha ao criar escritório no onboarding",
+      path: "/onboarding",
+      method: "POST",
+      routePath: "/onboarding",
+      metadata: { kind: "onboarding-create-law-firm", code: (error as { code?: string }).code ?? null },
+    });
     redirect("/onboarding?erro=criacao");
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { useEffect } from "react";
 
 export default function GlobalError({
   error,
@@ -9,6 +10,26 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    const payload = JSON.stringify({
+      source: "client",
+      message: error.message || "Erro de renderização da aplicação",
+      path: window.location.pathname,
+      method: "RENDER",
+      metadata: { kind: "app-error-boundary", digest: error.digest ?? null },
+    });
+
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon("/api/telemetry/errors", new Blob([payload], { type: "application/json" }));
+      } else {
+        void fetch("/api/telemetry/errors", { method: "POST", headers: { "content-type": "application/json" }, body: payload, keepalive: true });
+      }
+    } catch {
+      // A falha de observabilidade nunca deve substituir a tela de erro.
+    }
+  }, [error]);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
       <AlertTriangle className="size-16 text-destructive/60" />
