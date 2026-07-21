@@ -54,7 +54,7 @@ export default async function PedidosPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   function buildHref(overrides: Record<string, string>) {
-    const url = new URL("/solicitacoes-avancado/pedidos", "http://localhost");
+    const url = new URL("/solicitacoes/pedidos", "http://localhost");
     const status = overrides.status ?? params.status ?? "";
     const prioridade = overrides.prioridade ?? params.prioridade ?? "";
     if (status) url.searchParams.set("status", status);
@@ -71,7 +71,7 @@ export default async function PedidosPage({
         actions={
           canCreate ? (
             <Link
-              href="/solicitacoes-avancado/pedidos/novo"
+              href="/solicitacoes/pedidos/novo"
               className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
             >
               Nova Solicitação
@@ -197,7 +197,7 @@ export default async function PedidosPage({
       <Pagination
         currentPage={page}
         totalPages={totalPages}
-        basePath="/solicitacoes-avancado/pedidos"
+        basePath="/solicitacoes/pedidos"
         totalRecords={total}
       />
     </div>

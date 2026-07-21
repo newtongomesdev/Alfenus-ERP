@@ -54,7 +54,6 @@ export const navigationSections = [
       { label: "Controladoria", href: "/controladoria", icon: Monitor },
       { label: "Processos", href: "/processos", icon: Scale },
       { label: "Solicitações", href: "/solicitacoes", icon: Inbox },
-      { label: "Solicitações Avançado", href: "/solicitacoes-avancado", icon: Inbox },
       { label: "Correspondentes", href: "/correspondentes", icon: Users },
       { label: "Conflitos", href: "/conflitos", icon: FileSearch },
       { label: "Prazos", href: "/prazos", icon: CalendarDays },

@@ -21,7 +21,7 @@ export default async function NovoPedidoPage() {
               Seu papel não possui permissão para criar solicitações.
             </p>
             <Link
-              href="/solicitacoes-avancado/pedidos"
+              href="/solicitacoes/pedidos"
               className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted"
             >
               Voltar
@@ -119,7 +119,7 @@ export default async function NovoPedidoPage() {
                 Criar Solicitação
               </button>
               <Link
-                href="/solicitacoes-avancado/pedidos"
+                href="/solicitacoes/pedidos"
                 className="inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-muted"
               >
                 Cancelar

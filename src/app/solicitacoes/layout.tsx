@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getAppContext } from "@/lib/auth/context";
 import { AppShell } from "@/components/layout/app-shell";
 
-export default async function SolicitacoesAvancadoLayout({
+export default async function SolicitacoesLayout({
   children,
 }: {
   children: React.ReactNode;
