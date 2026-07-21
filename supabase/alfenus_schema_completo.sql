@@ -2150,6 +2150,39 @@ create index if not exists idx_custom_field_values_entity
   on public.custom_field_values(law_firm_id, entity_type, entity_id);
 -- <<< 0016_custom_fields_and_export.sql
 
+-- >>> 0021_plan_settings_and_admin_controls.sql
+create table if not exists public.plan_settings (
+  id text primary key,
+  name text not null,
+  description text not null default '',
+  price_cents integer not null default 0 check (price_cents >= 0),
+  billing_interval text not null default 'month' check (billing_interval in ('month', 'year')),
+  stripe_price_id text,
+  features jsonb not null default '[]'::jsonb,
+  feature_overrides jsonb not null default '{}'::jsonb,
+  active boolean not null default true,
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.plan_settings (id, name, description, price_cents, features)
+values
+  ('starter', 'Starter', 'Para escritórios que querem organizar a operação desde o primeiro dia.', 0, '["Clientes e leads", "Processos e prazos", "Agenda e tarefas", "Documentos seguros"]'::jsonb),
+  ('professional', 'Professional', 'Para equipes que precisam conectar operação, financeiro e produtividade.', 0, '["Tudo do Starter", "Contratos e recebimentos", "Relatórios gerenciais", "Gestão de equipe e permissões"]'::jsonb),
+  ('business', 'Business', 'Para operações jurídicas maiores, com mais controle e escala.', 0, '["Tudo do Professional", "Múltiplos escritórios", "Governança e auditoria", "Atendimento prioritário"]'::jsonb)
+on conflict (id) do nothing;
+
+alter table public.plan_settings enable row level security;
+drop policy if exists "public can view active plan settings" on public.plan_settings;
+create policy "public can view active plan settings" on public.plan_settings
+  for select using (active = true);
+-- <<< 0021_plan_settings_and_admin_controls.sql
+
+-- >>> 0037_plan_feature_overrides.sql
+alter table public.plan_settings
+  add column if not exists feature_overrides jsonb not null default '{}'::jsonb;
+-- <<< 0037_plan_feature_overrides.sql
+
 -- >>> 0038_error_events.sql
 -- Observabilidade de erros de producao sem armazenar cookies, tokens ou query strings.
 create table if not exists public.error_events (
