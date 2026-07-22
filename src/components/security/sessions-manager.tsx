@@ -8,8 +8,40 @@ import {
   terminateAllSessionsAction,
 } from "@/app/configuracoes/seguranca/actions";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { ActiveSession } from "@/lib/security/sessions";
-import { Monitor, Trash2, LogOut } from "lucide-react";
+import {
+  Globe,
+  Monitor,
+  Trash2,
+  LogOut,
+  Smartphone,
+  Laptop,
+  MapPin,
+  Clock,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+function getBrowserIcon(browser: string): LucideIcon {
+  switch (browser) {
+    case "Chrome":
+      return Globe;
+    case "Safari":
+      return Globe;
+    case "Firefox":
+      return Globe;
+    case "Edge":
+      return Globe;
+    default:
+      return Monitor;
+  }
+}
+
+function getOsIcon(os: string): LucideIcon {
+  if (os === "iOS" || os === "Android") return Smartphone;
+  if (os === "Windows" || os === "macOS" || os === "Linux") return Laptop;
+  return Monitor;
+}
 
 function parseUserAgent(ua: string | null): { browser: string; os: string } {
   if (!ua) return { browser: "Desconhecido", os: "" };
@@ -34,11 +66,11 @@ function formatRelativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
   if (minutes < 1) return "Agora";
-  if (minutes < 60) return `${minutes}min atras`;
+  if (minutes < 60) return `ha ${minutes} minuto${minutes > 1 ? "s" : ""}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h atras`;
+  if (hours < 24) return `ha ${hours} hora${hours > 1 ? "s" : ""}`;
   const days = Math.floor(hours / 24);
-  return `${days}d atras`;
+  return `ha ${days} dia${days > 1 ? "s" : ""}`;
 }
 
 export function SessionsManager({
@@ -94,29 +126,66 @@ export function SessionsManager({
         {sessions.map((session) => {
           const { browser, os } = parseUserAgent(session.userAgent);
           const isCurrent = session.userId === currentUserId;
+          const BrowserIcon = getBrowserIcon(browser);
+          const OsIcon = getOsIcon(os);
+
           return (
             <div
               key={session.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+              className={`relative flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors ${
+                isCurrent
+                  ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-950/10"
+                  : "border-border hover:bg-muted/30"
+              }`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                  <Monitor className="size-4 text-muted-foreground" />
+                <div
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
+                    isCurrent
+                      ? "bg-emerald-100 dark:bg-emerald-900/30"
+                      : "bg-muted"
+                  }`}
+                >
+                  <BrowserIcon
+                    className={`size-4 ${
+                      isCurrent
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground"
+                    }`}
+                  />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {browser}
-                    {os ? ` · ${os}` : ""}
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium">
+                      {browser}
+                      {os ? ` · ${os}` : ""}
+                    </p>
                     {isCurrent && (
-                      <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                      <Badge
+                        variant="default"
+                        className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+                      >
+                        <span className="mr-1 inline-block size-1.5 rounded-full bg-white animate-pulse" />
                         Sessao atual
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="size-3" />
+                      {session.ipAddress ?? "IP desconhecido"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {formatRelativeTime(session.lastActiveAt)}
+                    </span>
+                    {os && (
+                      <span className="flex items-center gap-1">
+                        <OsIcon className="size-3" />
+                        {os}
                       </span>
                     )}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {session.ipAddress ?? "IP desconhecido"} ·{" "}
-                    {formatRelativeTime(session.lastActiveAt)}
-                  </p>
+                  </div>
                 </div>
               </div>
 
