@@ -1,14 +1,16 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shield, ShieldCheck, ShieldOff, KeyRound, Smartphone, Clock } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAdminContext } from "@/lib/admin/auth";
 import { getAdminUserDetail } from "@/lib/admin/queries";
+import { getMfaResetStatus } from "@/lib/security/admin-mfa-reset";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { changeTenantPlan } from "@/app/admin/planos/actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AdminMfaResetDialog } from "@/components/admin/admin-mfa-reset-dialog";
 
 export default async function AdminUserDetailPage({
   params,
@@ -23,6 +25,23 @@ export default async function AdminUserDetailPage({
 
   const detail = await getAdminUserDetail(adminClient, id);
   if (!detail) redirect("/admin/usuarios");
+
+  // Buscar status MFA do usuário (com tratamento de erro)
+  let mfaStatus: {
+    hasEnrollment: boolean;
+    enrollmentEnabled: boolean;
+    activeRecoveryCodes: number;
+    trustedDevices: number;
+    lastUsedAt: string | null;
+  } | null = null;
+  try {
+    const firstMembership = detail.memberships[0];
+    if (firstMembership) {
+      mfaStatus = await getMfaResetStatus(id, firstMembership.lawFirmId);
+    }
+  } catch {
+    // Falha silenciosa — a seção de segurança simplesmente não será exibida
+  }
 
   return (
       <div className="space-y-6">
@@ -83,6 +102,81 @@ export default async function AdminUserDetailPage({
             </Table>
           </CardContent>
         </Card>
+
+        {/* Segurança */}
+        {mfaStatus && (
+          <Card className="rounded-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="size-4" />
+                Segurança
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex size-9 items-center justify-center rounded-lg ${mfaStatus.enrollmentEnabled ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-muted"}`}>
+                      {mfaStatus.enrollmentEnabled ? (
+                        <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <ShieldOff className="size-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">MFA</p>
+                      <p className="text-sm font-medium">
+                        {mfaStatus.enrollmentEnabled ? "Ativo" : "Inativo"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
+                      <KeyRound className="size-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Códigos de recuperação</p>
+                      <p className="text-sm font-medium">{mfaStatus.activeRecoveryCodes}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
+                      <Smartphone className="size-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Dispositivos confiáveis</p>
+                      <p className="text-sm font-medium">{mfaStatus.trustedDevices}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
+                      <Clock className="size-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Último uso</p>
+                      <p className="text-sm font-medium">
+                        {mfaStatus.lastUsedAt
+                          ? new Date(mfaStatus.lastUsedAt).toLocaleDateString("pt-BR")
+                          : "Nunca"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="shrink-0 pt-2 sm:pt-0">
+                  <AdminMfaResetDialog
+                    targetUserId={detail.id}
+                    targetUserName={detail.email}
+                    mfaStatus={mfaStatus}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
   );
 }
