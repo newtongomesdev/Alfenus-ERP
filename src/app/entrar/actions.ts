@@ -1,10 +1,12 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { hasSupabaseEnv } from "@/lib/env";
 import { recordErrorEvent } from "@/lib/observability/error-events";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function signInAction(formData: FormData) {
   if (!hasSupabaseEnv()) {
@@ -47,7 +49,7 @@ export async function signInAction(formData: FormData) {
 
     const { data: activeMembership, error: membershipError } = await supabase
       .from("law_firm_members")
-      .select("id")
+      .select("id, law_firm_id")
       .eq("user_id", sessionData.user.id)
       .eq("status", "ativo")
       .limit(1)
@@ -67,6 +69,37 @@ export async function signInAction(formData: FormData) {
 
     if (!activeMembership) {
       redirect("/onboarding");
+    }
+
+    // 3. Criar registro de sessão ativa
+    try {
+      const adminClient = getSupabaseAdminClient();
+      if (adminClient && activeMembership?.id && activeMembership?.law_firm_id) {
+        const headerStore = await headers();
+        const ip = headerStore.get("x-forwarded-for")?.split(",")[0] ?? headerStore.get("x-real-ip") ?? "unknown";
+        const ua = headerStore.get("user-agent") ?? "unknown";
+
+        await (adminClient as any).from("active_sessions").insert({
+          law_firm_id: activeMembership.law_firm_id,
+          user_id: sessionData.user.id,
+          member_id: activeMembership.id,
+          session_token: crypto.randomUUID(),
+          ip_address: ip,
+          user_agent: ua,
+        });
+
+        // Registrar auditoria de login
+        await (adminClient as any).from("audit_logs").insert({
+          law_firm_id: activeMembership.law_firm_id,
+          actor_id: sessionData.user.id,
+          action: "sign_in",
+          entity_type: "auth_session",
+          entity_id: activeMembership.id,
+          metadata: { ip, user_agent: ua, timestamp: new Date().toISOString() },
+        });
+      }
+    } catch {
+      // Criação de sessão é best-effort — não bloquear login
     }
   } else {
     redirect("/entrar?erro=acesso");
