@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { can, permissions, roles, type Role } from "./permissions";
 
 describe("permissions", () => {
-  it("contém 28 permissões", () => {
-    expect(permissions).toHaveLength(28);
+  it("contém 33 permissões", () => {
+    expect(permissions).toHaveLength(33);
   });
 
   it("contém 7 roles", () => {
@@ -25,9 +25,13 @@ describe("can - proprietário", () => {
 describe("can - administrador", () => {
   const role: Role = "administrador";
 
-  it("possui todas as permissões", () => {
+  it("possui todas as permissões exceto resetar MFA de outro usuário", () => {
     for (const permission of permissions) {
-      expect(can(role, permission)).toBe(true);
+      if (permission === "security.mfa.reset_user") {
+        expect(can(role, permission)).toBe(false);
+      } else {
+        expect(can(role, permission)).toBe(true);
+      }
     }
   });
 });

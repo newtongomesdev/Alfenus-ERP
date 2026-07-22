@@ -273,9 +273,14 @@ describe("Tenant isolation – permission matrix completeness", () => {
     expect(uniqueSets.size).toBeGreaterThan(1);
   });
 
-  it("proprietario and administrador have identical permissions", () => {
+  it("proprietario and administrador have identical permissions except security.mfa.reset_user", () => {
     for (const perm of permissions) {
-      expect(can("proprietario", perm)).toBe(can("administrador", perm));
+      if (perm === "security.mfa.reset_user") {
+        expect(can("proprietario", perm)).toBe(true);
+        expect(can("administrador", perm)).toBe(false);
+      } else {
+        expect(can("proprietario", perm)).toBe(can("administrador", perm));
+      }
     }
   });
 

@@ -55,6 +55,11 @@ const permissionLabels: Record<Permission, string> = {
   "equipe.gerenciar": "Gerenciar equipe",
   "relatorios.visualizar": "Ver relatórios",
   "configuracoes.administrar": "Administrar configurações",
+  "security.mfa.view": "Visualizar MFA",
+  "security.mfa.manage_own": "Gerenciar MFA próprio",
+  "security.mfa.enforce": "Configurar política MFA",
+  "security.mfa.reset_user": "Resetar MFA de usuário",
+  "security.mfa.view_status": "Ver status MFA",
 };
 
 const roleLabels: Record<Role, string> = {

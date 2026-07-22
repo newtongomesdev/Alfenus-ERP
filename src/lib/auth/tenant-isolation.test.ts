@@ -51,6 +51,7 @@ describe("Tenant isolation", () => {
       "processos.visualizar",
       "prazos.visualizar",
       "relatorios.visualizar",
+      "security.mfa.view",
     ] as const;
     for (const perm of visualizadorPerms) {
       expect(can("visualizador", perm)).toBe(true);
@@ -81,10 +82,17 @@ describe("Tenant isolation", () => {
   });
 
   it("permission matrix: each role has correct permissions", () => {
-    // proprietario and administrador have all permissions
+    // proprietario has all permissions
     for (const perm of permissions) {
       expect(can("proprietario", perm)).toBe(true);
-      expect(can("administrador", perm)).toBe(true);
+    }
+    // administrador has all except security.mfa.reset_user
+    for (const perm of permissions) {
+      if (perm === "security.mfa.reset_user") {
+        expect(can("administrador", perm)).toBe(false);
+      } else {
+        expect(can("administrador", perm)).toBe(true);
+      }
     }
 
     // advogado cannot manage finance or team
