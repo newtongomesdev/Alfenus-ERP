@@ -10,8 +10,8 @@
 CREATE TABLE IF NOT EXISTS public.onboarding_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   law_firm_id uuid NOT NULL UNIQUE REFERENCES public.law_firms(id) ON DELETE CASCADE,
-  profile text NOT NULL DEFAULT 'padrao'
-    CHECK (profile IN ('padrao', 'escritorio_grande', 'advocacia_independente', 'corporativo')),
+  profile text NOT NULL DEFAULT 'small'
+    CHECK (profile IN ('individual', 'small', 'team', 'department')),
   current_step integer NOT NULL DEFAULT 1,
   total_steps integer NOT NULL DEFAULT 18,
   completed_steps integer[] NOT NULL DEFAULT ARRAY[]::integer[],
@@ -69,6 +69,16 @@ ALTER TABLE public.team_invitations
 
 ALTER TABLE public.team_invitations
   ADD COLUMN IF NOT EXISTS notes text;
+
+-- Atualizar CHECK constraint da coluna status para incluir novos valores
+DO $$ BEGIN
+  ALTER TABLE public.team_invitations
+    DROP CONSTRAINT IF EXISTS team_invitations_status_check;
+  ALTER TABLE public.team_invitations
+    ADD CONSTRAINT team_invitations_status_check
+    CHECK (status IN ('pendente', 'visualizado', 'aceito', 'expirado', 'cancelado', 'recusado'));
+EXCEPTION WHEN undefined_object THEN null;
+END $$;
 
 -- Atualizar status de convites existentes baseado nos dados atuais
 UPDATE public.team_invitations
