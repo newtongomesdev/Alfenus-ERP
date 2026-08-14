@@ -104,6 +104,7 @@ const rolePermissions: Record<Role, Permission[]> = {
     "tarefas.gerenciar",
     "despesas.editar",
     "agenda.editar",
+    "contratos.gerenciar",
     "security.mfa.view",
     "security.mfa.manage_own",
   ],

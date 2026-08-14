@@ -97,7 +97,7 @@ describe("Tenant isolation", () => {
 
     // advogado cannot manage finance or team
     expect(can("advogado", "financeiro.visualizar")).toBe(false);
-    expect(can("advogado", "contratos.gerenciar")).toBe(false);
+    expect(can("advogado", "contratos.gerenciar")).toBe(true);
     expect(can("advogado", "pagamentos.registrar")).toBe(false);
     expect(can("advogado", "equipe.gerenciar")).toBe(false);
     expect(can("advogado", "configuracoes.administrar")).toBe(false);

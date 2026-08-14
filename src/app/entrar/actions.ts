@@ -7,6 +7,10 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { recordErrorEvent } from "@/lib/observability/error-events";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { requiresMfaChallenge } from "@/lib/security/mfa-policies";
+import { verifyTrustedDevice } from "@/lib/security/trusted-devices";
+import { setPendingMfaState } from "@/app/entrar/mfa/pending-state";
+import type { Role } from "@/lib/auth/permissions";
 
 export async function signInAction(formData: FormData) {
   if (!hasSupabaseEnv()) {
@@ -71,14 +75,59 @@ export async function signInAction(formData: FormData) {
       redirect("/onboarding");
     }
 
-    // 3. Criar registro de sessão ativa
+    // 3. Verificar se MFA é obrigatório para este usuário
+    const headerStore = await headers();
+    const ip = headerStore.get("x-forwarded-for")?.split(",")[0] ?? headerStore.get("x-real-ip") ?? "unknown";
+    const ua = headerStore.get("user-agent") ?? "unknown";
+
+    // Buscar role do membro para política MFA
+    const { data: memberWithRole } = await supabase
+      .from("law_firm_members")
+      .select("role")
+      .eq("id", activeMembership!.id)
+      .maybeSingle();
+
+    const userRole = (memberWithRole as { role?: string } | null)?.role ?? "colaborador";
+
+    // Gerar hash do dispositivo para verificar confiança
+    let deviceTrusted = false;
+    try {
+      const deviceHashBuf = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(ua)
+      );
+      const deviceHash = Array.from(new Uint8Array(deviceHashBuf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      deviceTrusted = await verifyTrustedDevice(sessionData.user.id, deviceHash);
+    } catch {
+      // Falha ao verificar dispositivo → tratar como não confiável
+    }
+
+    const mfaRequired = await requiresMfaChallenge(
+      userRole as Role,
+      activeMembership!.law_firm_id,
+      deviceTrusted
+    );
+
+    if (mfaRequired) {
+      // MFA necessário: armazenar estado pendente e redirecionar para /entrar/mfa
+      // A sessão Supabase já existe (signInWithPassword criou), mas o acesso
+      // ao dashboard será bloqueado até que o desafio MFA seja resolvido.
+      await setPendingMfaState({
+        user_id: sessionData.user.id,
+        law_firm_id: activeMembership!.law_firm_id,
+        member_id: activeMembership!.id,
+        role: userRole,
+        created_at: Date.now(),
+      });
+      redirect("/entrar/mfa");
+    }
+
+    // MFA não necessário: criar sessão ativa e redirecionar ao dashboard
     try {
       const adminClient = getSupabaseAdminClient();
       if (adminClient && activeMembership?.id && activeMembership?.law_firm_id) {
-        const headerStore = await headers();
-        const ip = headerStore.get("x-forwarded-for")?.split(",")[0] ?? headerStore.get("x-real-ip") ?? "unknown";
-        const ua = headerStore.get("user-agent") ?? "unknown";
-
         await (adminClient as any).from("active_sessions").insert({
           law_firm_id: activeMembership.law_firm_id,
           user_id: sessionData.user.id,

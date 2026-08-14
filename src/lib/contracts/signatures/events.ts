@@ -1,0 +1,1 @@
+export type SignatureEventType = "signature_envelope_created" | "signature_signer_added" | "signature_signer_updated" | "signature_signer_removed" | "signature_signers_reordered" | "signature_envelope_prepared" | "signature_envelope_cancelled" | "signature_envelope_operation_failed";

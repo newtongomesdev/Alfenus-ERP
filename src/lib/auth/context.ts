@@ -28,6 +28,8 @@ export type AppLawFirm = {
   status: string;
   createdAt: string;
   settings?: Record<string, any>;
+  interfaceMode?: "simples" | "completa" | "personalizada";
+  operationProfile?: string;
 };
 
 export type AppContext = {
@@ -55,6 +57,7 @@ export async function getAppContext(): Promise<AppContext> {
     return { status: "signed-out", member: null, lawFirm: null };
   }
 
+  // interface_mode and operation_profile are queried via cast since types will be regenerated after migration.
   const memberSelect = "id, user_id, law_firm_id, name, email, role, status, position, last_access_at, law_firms(id, name, slug, document, email, phone, logo_path, plan, status, created_at, settings)";
   let { data, error } = await supabase
     .from("law_firm_members")
@@ -106,6 +109,8 @@ export async function getAppContext(): Promise<AppContext> {
       status: string;
       created_at: string;
       settings?: any;
+      interface_mode?: string;
+      operation_profile?: string;
     } | null;
   };
 
@@ -138,6 +143,8 @@ export async function getAppContext(): Promise<AppContext> {
       status: row.law_firms.status,
       createdAt: row.law_firms.created_at,
       settings: row.law_firms.settings,
+      interfaceMode: (row.law_firms.interface_mode as "simples" | "completa" | "personalizada") ?? "completa",
+      operationProfile: row.law_firms.operation_profile ?? undefined,
     },
   };
 }

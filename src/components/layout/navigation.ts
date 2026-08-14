@@ -25,6 +25,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Shield,
   SlidersHorizontal,
   Timer,
   Upload,
@@ -33,7 +34,19 @@ import {
   Workflow,
 } from "lucide-react";
 
-export const navigationSections = [
+export type NavigationItem = {
+  label: string;
+  href: string;
+  icon: typeof ShieldCheck;
+  children?: NavigationItem[];
+};
+
+export type NavigationSection = {
+  label: string;
+  items: NavigationItem[];
+};
+
+export const navigationSections: NavigationSection[] = [
   {
     label: "Visão geral",
     items: [{ label: "Dashboard", href: "/dashboard", icon: CircleGauge }],
@@ -63,6 +76,7 @@ export const navigationSections = [
       { label: "Agenda", href: "/agenda", icon: Clock3 },
       { label: "Tarefas", href: "/tarefas", icon: BriefcaseBusiness },
       { label: "Workflows", href: "/workflows", icon: GitBranch },
+      { label: "Propostas", href: "/propostas", icon: ScrollText },
     ],
   },
   {
@@ -86,12 +100,26 @@ export const navigationSections = [
       { label: "Campos", href: "/configuracoes/campos-personalizados", icon: SlidersHorizontal },
       { label: "Backup", href: "/backup", icon: Database },
       { label: "Auditoria", href: "/auditoria", icon: ScrollText },
-      { label: "Segurança", href: "/configuracoes/seguranca", icon: ShieldCheck },
+      {
+        label: "Segurança",
+        href: "/configuracoes/seguranca",
+        icon: ShieldCheck,
+        children: [
+          { label: "MFA", href: "/configuracoes/seguranca/mfa", icon: Shield },
+          { label: "Sessões", href: "/configuracoes/seguranca/sessoes", icon: Monitor },
+          { label: "Dispositivos", href: "/configuracoes/seguranca/dispositivos", icon: KeyRound },
+          { label: "Recuperação", href: "/configuracoes/seguranca/recuperacao", icon: KeyRound },
+          { label: "Políticas", href: "/configuracoes/seguranca/politicas", icon: Settings },
+          { label: "Usuários", href: "/configuracoes/seguranca/usuarios", icon: Users },
+          { label: "Eventos", href: "/configuracoes/seguranca/eventos", icon: ScrollText },
+        ],
+      },
       { label: "Comunicação", href: "/comunicacao-avancada", icon: MessageSquare },
       { label: "Formulários", href: "/formularios-avancados", icon: ClipboardList },
       { label: "Ferramentas PDF", href: "/ferramentas-pdf", icon: FileDown },
       { label: "LGPD", href: "/lgpd", icon: ShieldCheck },
       { label: "Configurações", href: "/configuracoes", icon: Settings },
+      { label: "Assinaturas", href: "/configuracoes/assinaturas", icon: KeyRound },
     ],
   },
 ];

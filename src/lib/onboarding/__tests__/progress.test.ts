@@ -1,3 +1,13 @@
+import { vi } from "vitest";
+
+vi.mock("@/lib/supabase/server", () => ({
+  getSupabaseServerClient: vi.fn(),
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(),
+}));
+
 import { describe, expect, it } from "vitest";
 
 import {

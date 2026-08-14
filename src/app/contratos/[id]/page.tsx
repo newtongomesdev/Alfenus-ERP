@@ -7,13 +7,17 @@ import { cancelContractAction } from "@/app/contratos/actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { getContractDetails } from "@/lib/contracts/queries";
+import { getContractConversionDetails } from "@/lib/contracts/queries";
+import { ContractConversionCard } from "@/components/contracts/contract-conversion-card";
+import { ContractStateActions } from "@/components/contracts/contract-state-actions";
+import { getContractEditorDetails } from "@/lib/contracts/queries";
+import type { ContractDraft } from "@/lib/contracts/editor";
 import { getFinancialSummaryByContract } from "@/lib/finance/queries";
 import { formatCurrencyFromCents, formatDate, formatDateTime } from "@/lib/formatters";
 
@@ -22,7 +26,7 @@ export default async function ContractDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ editado?: string }>;
+  searchParams: Promise<{ editado?: string; convertido?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -49,10 +53,14 @@ export default async function ContractDetailPage({
 
   let contract: Awaited<ReturnType<typeof getContractDetails>>;
   let financialSummary: Awaited<ReturnType<typeof getFinancialSummaryByContract>>;
+  let conversion: Awaited<ReturnType<typeof getContractConversionDetails>>;
+  let editor: Awaited<ReturnType<typeof getContractEditorDetails>>;
 
   try {
     contract = await getContractDetails(context.lawFirm.id, id);
     financialSummary = await getFinancialSummaryByContract(context.lawFirm.id, id);
+    conversion = await getContractConversionDetails(id);
+    editor = await getContractEditorDetails(id);
   } catch {
     return (
       <AppShell memberName={context.member.name}>
@@ -82,6 +90,7 @@ export default async function ContractDetailPage({
   }
 
   const canManage = can(context.member.role, "contratos.gerenciar");
+  const activeVersion = editor?.versions.find((item) => item.isActive) ?? editor?.versions.at(-1);
 
   return (
     <AppShell memberName={context.member.name}>
@@ -102,6 +111,9 @@ export default async function ContractDetailPage({
           title={contract.serviceDescription}
           description={`Contrato com ${contract.clientName ?? "cliente"} · Criado em ${formatDate(contract.createdAt)}`}
         />
+
+        {query.convertido ? <Card className="rounded-lg border-[var(--chart-2)]/30 bg-[var(--chart-2)]/5"><CardContent className="p-4 text-sm">Contrato criado a partir da proposta aceita.</CardContent></Card> : null}
+        <ContractConversionCard conversion={conversion} />
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="rounded-lg">
@@ -199,6 +211,10 @@ export default async function ContractDetailPage({
                   >
                     Editar contrato
                   </Link>
+                  {editor ? <Link href={`/contratos/${contract.id}/comparar`} className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted">Comparar versões</Link> : null}
+                  {editor ? <Link href={`/contratos/${contract.id}/documento`} className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted">Documento e PDF</Link> : null}
+                  {editor ? <Link href={`/contratos/${contract.id}/assinatura`} className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted">Assinatura interna</Link> : null}
+                  {editor && activeVersion ? <ContractStateActions contractId={contract.id} expectedUpdatedAt={editor.contract.updatedAt} status={contract.status} archived={Boolean(editor.contract.archivedAt)} draft={{ title: activeVersion.title, content: activeVersion.content, parties: activeVersion.parties as ContractDraft["parties"], clauses: activeVersion.clauses.map((item, order) => ({ title: String(item.title ?? ""), content: String(item.content ?? ""), order, type: String(item.type ?? "custom") as ContractDraft["clauses"][number]["type"], required: Boolean(item.required), enabled: item.enabled !== false })), terms: activeVersion.terms as ContractDraft["terms"], metadata: activeVersion.metadata as ContractDraft["metadata"], schemaVersion: 1 }} /> : null}
                   <ConfirmSubmitButton
                     formId="cancel-contract-form"
                     title="Cancelar contrato"

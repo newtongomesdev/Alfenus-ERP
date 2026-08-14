@@ -11,21 +11,10 @@ import { describe, expect, it } from "vitest";
  */
 
 const migrationsDir = resolve(__dirname, "../../../supabase/migrations");
+const canonicalMigration = resolve(migrationsDir, "20260726200000_alfenus_canonical_baseline.sql");
 
 function readMigration(pattern: RegExp): string {
-  const files = [
-    "0001_foundation.sql",
-    "0002_operational_completeness.sql",
-  ];
-  let combined = "";
-  for (const file of files) {
-    try {
-      combined += readFileSync(resolve(migrationsDir, file), "utf-8") + "\n";
-    } catch {
-      // File may not exist in test environment
-    }
-  }
-  return combined;
+  return readFileSync(canonicalMigration, "utf-8");
 }
 
 const CRITICAL_TABLES = [

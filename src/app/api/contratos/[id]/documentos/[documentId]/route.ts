@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { getAppContext } from "@/lib/auth/context";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+
+export async function GET(_: Request, { params }: { params: Promise<{ id: string; documentId: string }> }) {
+  const { id, documentId }=await params; const context=await getAppContext(); if(context.status!=="ready"||!context.member||!context.lawFirm)return NextResponse.json({error:"AUTH_REQUIRED"},{status:401}); if(!["proprietario","administrador","advogado"].includes(context.member.role)||await isSupport(context.lawFirm.id))return NextResponse.json({error:"FORBIDDEN"},{status:403}); const supabase=await getSupabaseServerClient(); if(!supabase)return NextResponse.json({error:"SERVICE_UNAVAILABLE"},{status:503}); const {data,error}=await (supabase as any).from("contract_documents").select("storage_bucket,storage_path,file_name,mime_type,status,contract_id").eq("id",documentId).eq("contract_id",id).eq("law_firm_id",context.lawFirm.id).eq("status","completed").single(); if(error||!data)return NextResponse.json({error:"DOCUMENT_NOT_FOUND"},{status:404}); const signed=await supabase.storage.from(data.storage_bucket).createSignedUrl(data.storage_path,60); if(signed.error||!signed.data?.signedUrl)return NextResponse.json({error:"DOWNLOAD_UNAVAILABLE"},{status:404}); return NextResponse.redirect(signed.data.signedUrl);
+}
+async function isSupport(lawFirmId:string){const supabase=await getSupabaseServerClient(); if(!supabase)return true; const result=await supabase.rpc("is_active_assisted_support_session",{p_law_firm_id:lawFirmId}); return Boolean(result.data);}

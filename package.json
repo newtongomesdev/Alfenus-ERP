@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:migrations:check": "node scripts/check_migration_prefixes.mjs",
+    "db:migrations:canonical": "node scripts/build_canonical_migration.mjs",
+    "db:migrations:validate": "node scripts/validate_canonical_migration.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -30,6 +33,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.81.0",
     "recharts": "^3.9.2",
+    "server-only": "^0.0.1",
     "shadcn": "^4.13.0",
     "sonner": "^2.0.7",
     "stripe": "^22.3.2",
@@ -44,6 +48,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.22.0",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"

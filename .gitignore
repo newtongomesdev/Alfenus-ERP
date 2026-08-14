@@ -40,5 +40,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Local pricing UI validation artifacts
+artifacts/pricing-final/
+artifacts/pricing-final-v2/
+artifacts/pricing-final-v3/
+artifacts/pricing-final-v4/
+supabase/config.toml.pre-repair.bak
+
 .vercel
 .env*
+/.agents/
+/.claude/
+/artifacts/
+*.log
+*.err

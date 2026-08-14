@@ -27,6 +27,7 @@ export async function createLawFirmAction(formData: FormData) {
   const document = String(formData.get("document") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
+  const profile = String(formData.get("profile") ?? "escritorio_com_equipe").trim();
   const slug = slugInput ? toSlug(slugInput) : toSlug(name);
 
   const parsed = lawFirmSchema.safeParse({
@@ -75,6 +76,28 @@ export async function createLawFirmAction(formData: FormData) {
       metadata: { kind: "onboarding-create-law-firm", code: (error as { code?: string }).code ?? null },
     });
     redirect("/onboarding?erro=criacao");
+  }
+
+  // Map onboarding profile keys to operation_profile values.
+  // Onboarding uses: individual, small, team, department
+  // DB expects: advogado_independente, escritorio_pequeno, escritorio_com_equipe, departamento_juridico, personalizado
+  const profileMap: Record<string, string> = {
+    individual: "advogado_independente",
+    small: "escritorio_pequeno",
+    team: "escritorio_com_equipe",
+    department: "departamento_juridico",
+  };
+  const mappedProfile = profileMap[profile] ?? "escritorio_com_equipe";
+  const isSolo = mappedProfile === "advogado_independente";
+
+  if (lawFirmId) {
+    await (supabase as any)
+      .from("law_firms")
+      .update({
+        operation_profile: mappedProfile,
+        interface_mode: isSolo ? "simples" : "completa",
+      })
+      .eq("id", lawFirmId);
   }
 
   const acceptedAt = typeof user.user_metadata?.privacy_accepted_at === "string" ? user.user_metadata.privacy_accepted_at : null;

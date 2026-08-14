@@ -1,0 +1,4 @@
+import { createHash } from "node:crypto";
+import type { SignatureSource } from "./types";
+export function buildSignatureSnapshot(source: SignatureSource, consentVersion: string) { return { contractId: source.contractId, contractDocumentId: source.contractDocumentId, contractVersionId: source.contractVersionId, documentHash: source.documentHash, documentFileSize: source.fileSize, documentPageCount: source.pageCount, title: source.title, firmName: source.firmName ?? null, parties: source.parties ?? {}, createdAt: source.createdAt ?? null, rendererVersion: source.rendererVersion ?? null, templateVersion: source.templateVersion ?? null, consentVersion }; }
+export function signatureSnapshotHash(snapshot: Record<string, unknown>) { return createHash("sha256").update(JSON.stringify(snapshot), "utf8").digest("hex"); }

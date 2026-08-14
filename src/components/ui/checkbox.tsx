@@ -9,9 +9,10 @@ interface CheckboxProps {
   onCheckedChange?: (checked: boolean) => void;
   className?: string;
   disabled?: boolean;
+  "aria-label"?: string;
 }
 
-function Checkbox({ checked = false, onCheckedChange, className, disabled }: CheckboxProps) {
+function Checkbox({ checked = false, onCheckedChange, className, disabled, "aria-label": ariaLabel }: CheckboxProps) {
   const isChecked = checked === true;
   const isIndeterminate = checked === "indeterminate";
 
@@ -20,6 +21,7 @@ function Checkbox({ checked = false, onCheckedChange, className, disabled }: Che
       type="button"
       role="checkbox"
       aria-checked={isIndeterminate ? "mixed" : isChecked}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onCheckedChange?.(!isChecked)}
       className={cn(

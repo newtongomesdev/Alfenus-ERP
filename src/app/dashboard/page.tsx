@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getDashboardOverview } from "@/lib/dashboard/queries";
+import { getAppContext } from "@/lib/auth/context";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 
 function SetupNotice({ status }: { status: string }) {
@@ -72,6 +73,8 @@ function SetupNotice({ status }: { status: string }) {
 }
 
 export default async function Home() {
+  const ctx = await getAppContext().catch(() => null);
+
   let overview;
   try {
     overview = await getDashboardOverview();
@@ -100,6 +103,7 @@ export default async function Home() {
     <AppShell
       memberName={overview.memberName}
       isAuthenticated={overview.status === "ready"}
+      interfaceMode={ctx?.lawFirm?.interfaceMode}
     >
       <div className="space-y-6">
         <PageHeader

@@ -17,10 +17,13 @@ import { can, permissions, roles } from "./permissions";
  */
 
 const migrationsDir = resolve(__dirname, "../../../supabase/migrations");
+const canonicalMigration = resolve(migrationsDir, "20260726200000_alfenus_canonical_baseline.sql");
 
 function readMigration(filename: string): string {
   try {
-    return readFileSync(resolve(migrationsDir, filename), "utf-8");
+    const canonical = readFileSync(canonicalMigration, "utf-8");
+    const section = canonical.match(new RegExp(`-- >>> canonical source: ${filename}\\n([\\s\\S]*?)\\n-- <<< canonical source: ${filename}`));
+    return section?.[1] ?? canonical;
   } catch {
     return "";
   };

@@ -19,7 +19,23 @@ export type PlanFeatures = {
   hasTicketing: boolean;
 };
 
-export const DEFAULT_PLAN_FEATURES: Record<string, Partial<PlanFeatures>> = {
+export const DEFAULT_PLAN_FEATURES: Record<string, PlanFeatures> = {
+  solo: {
+    maxMembers: 1,
+    maxClients: 30,
+    maxDocumentsStorageMb: 200,
+    maxContracts: 30,
+    maxCases: 30,
+    hasAiFeatures: false,
+    hasPwa: false,
+    hasLgpd: false,
+    hasClm: false,
+    hasRiskManagement: false,
+    hasLegalRequests: false,
+    hasPublicForms: false,
+    hasPdfTools: true,
+    hasTicketing: false,
+  },
   starter: {
     maxMembers: 5,
     maxClients: 50,

@@ -43,7 +43,14 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => nextOpen ? onOpenChange(true) : closeDialog()}>
-      <DialogPopup>
+      <DialogPopup
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeDialog();
+          }
+        }}
+      >
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription className="mt-2">{description}</DialogDescription>
         {confirmationText ? (

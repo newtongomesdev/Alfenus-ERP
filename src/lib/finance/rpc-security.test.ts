@@ -16,10 +16,11 @@ import { describe, expect, it } from "vitest";
  */
 
 const migrationsDir = resolve(__dirname, "../../../supabase/migrations");
+const canonicalMigration = resolve(migrationsDir, "20260726200000_alfenus_canonical_baseline.sql");
 
 function readMigration(filename: string): string {
   try {
-    return readFileSync(resolve(migrationsDir, filename), "utf-8");
+    return readFileSync(canonicalMigration, "utf-8");
   } catch {
     return "";
   }

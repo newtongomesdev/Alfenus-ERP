@@ -9,9 +9,9 @@ import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getAppContext } from "@/lib/auth/context";
+import { getAppContext, getLawFirmMembers } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
-import { getContractsOverview } from "@/lib/contracts/queries";
+import { getContractListOptions, getContractsOverview, type ContractListFilters } from "@/lib/contracts/queries";
 import { formatCurrencyFromCents, formatDate } from "@/lib/formatters";
 
 function ContractsUnavailable({ status }: { status: string }) {
@@ -50,21 +50,36 @@ function ContractsUnavailable({ status }: { status: string }) {
 export default async function ContractsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ criado?: string; erro?: string; page?: string }>;
+  searchParams: Promise<{ criado?: string; erro?: string; page?: string; q?: string; status?: string; clientId?: string; responsibleMemberId?: string; origin?: "proposal" | "manual"; de?: string; ate?: string; arquivados?: string; sort?: ContractListFilters["sort"]; direction?: "asc" | "desc" }>;
 }) {
   const params = await searchParams;
   const PAGE_SIZE = 20;
-  const page = Math.max(1, Number(params.page ?? 1));
+  const parsedPage = Number(params.page ?? 1);
+  const page = Number.isFinite(parsedPage) ? Math.max(1, Math.trunc(parsedPage)) : 1;
+  const filters: ContractListFilters = { search: params.q?.trim() || undefined, status: params.status || undefined, clientId: params.clientId || undefined, responsibleMemberId: params.responsibleMemberId || undefined, origin: params.origin, dateFrom: params.de, dateTo: params.ate, includeArchived: params.arquivados === "1", sort: params.sort, direction: params.direction };
 
   let context: Awaited<ReturnType<typeof getAppContext>>;
   let overview: Awaited<ReturnType<typeof getContractsOverview>>;
+  let members: Awaited<ReturnType<typeof getLawFirmMembers>> = [];
+  let options: Awaited<ReturnType<typeof getContractListOptions>> = { clients: [] };
 
   try {
     context = await getAppContext();
-    if (context.status !== "ready" || !context.member || !context.lawFirm) {
-      return <ContractsUnavailable status={context.status} />;
-    }
-    overview = await getContractsOverview(context.lawFirm.id, page, PAGE_SIZE);
+  } catch {
+    return (
+      <AppShell memberName={null}>
+        <div className="space-y-6">
+          <PageHeader title="Contratos" description="Honorários, contratos, parcelamentos e situação financeira." />
+          <Card className="rounded-lg border-dashed"><CardContent className="p-6 text-sm text-muted-foreground">Não foi possível carregar os contratos. Verifique a configuração do Supabase.</CardContent></Card>
+        </div>
+      </AppShell>
+    );
+  }
+  if (context.status !== "ready" || !context.member || !context.lawFirm) {
+    return <ContractsUnavailable status={context.status} />;
+  }
+  try {
+    [overview, members, options] = await Promise.all([getContractsOverview(context.lawFirm.id, page, PAGE_SIZE, filters), getLawFirmMembers(context.lawFirm.id), getContractListOptions(context.lawFirm.id)]);
   } catch {
     return (
       <AppShell memberName={null}>
@@ -82,6 +97,9 @@ export default async function ContractsPage({
 
   const canManageContracts = can(context.member.role, "contratos.gerenciar");
   const totalPages = Math.max(1, Math.ceil(overview.totalCount / PAGE_SIZE));
+  const filterQuery = new URLSearchParams();
+  for (const [key, value] of Object.entries({ q: params.q, status: params.status, clientId: params.clientId, responsibleMemberId: params.responsibleMemberId, origin: params.origin, de: params.de, ate: params.ate, arquivados: params.arquivados, sort: params.sort, direction: params.direction })) if (value) filterQuery.set(key, value);
+  const paginationPath = filterQuery.toString() ? `/contratos?${filterQuery.toString()}` : "/contratos";
 
   return (
     <AppShell memberName={context.member.name}>
@@ -129,10 +147,17 @@ export default async function ContractsPage({
             <CardDescription>Contratos reais do tenant ativo, com cliente, parcelas e status financeiro.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="relative max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Buscar por cliente, contrato ou forma de pagamento" />
-            </div>
+            <form method="get" className="grid gap-3 rounded-lg border bg-muted/20 p-3 md:grid-cols-4 xl:grid-cols-8">
+              <label className="relative md:col-span-2 xl:col-span-3"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><span className="sr-only">Buscar</span><Input name="q" className="pl-9" placeholder="Cliente, contrato ou pagamento" defaultValue={params.q ?? ""} /></label>
+              <select name="status" aria-label="Status" defaultValue={params.status ?? ""} className="h-8 rounded-lg border border-input bg-background px-2 text-sm"><option value="">Todos os status</option><option value="rascunho">Rascunho</option><option value="aguardando_assinatura">Aguardando assinatura</option><option value="ativo">Ativo</option><option value="quitado">Quitado</option><option value="inadimplente">Inadimplente</option><option value="cancelado">Cancelado</option></select>
+              <select name="origin" aria-label="Origem" defaultValue={params.origin ?? ""} className="h-8 rounded-lg border border-input bg-background px-2 text-sm"><option value="">Todas as origens</option><option value="proposal">Proposta aceita</option><option value="manual">Manual</option></select>
+              <select name="clientId" aria-label="Cliente" defaultValue={params.clientId ?? ""} className="h-8 rounded-lg border border-input bg-background px-2 text-sm"><option value="">Todos os clientes</option>{options.clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select>
+              <select name="responsibleMemberId" aria-label="Responsável" defaultValue={params.responsibleMemberId ?? ""} className="h-8 rounded-lg border border-input bg-background px-2 text-sm"><option value="">Todos os responsáveis</option>{members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</select>
+              <input type="date" name="de" aria-label="Data inicial" defaultValue={params.de ?? ""} className="h-8 rounded-lg border border-input bg-background px-2 text-sm" /><input type="date" name="ate" aria-label="Data final" defaultValue={params.ate ?? ""} className="h-8 rounded-lg border border-input bg-background px-2 text-sm" />
+              <select name="sort" aria-label="Ordenar por" defaultValue={params.sort ?? "created_at"} className="h-8 rounded-lg border border-input bg-background px-2 text-sm"><option value="created_at">Mais recentes</option><option value="updated_at">Atualização</option><option value="total_amount_cents">Valor</option><option value="service_description">Nome</option><option value="status">Status</option></select>
+              <select name="direction" aria-label="Direção" defaultValue={params.direction ?? "desc"} className="h-8 rounded-lg border border-input bg-background px-2 text-sm"><option value="desc">Descendente</option><option value="asc">Ascendente</option></select>
+              <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" name="arquivados" value="1" defaultChecked={params.arquivados === "1"} />Incluir arquivados</label><button type="submit" className="h-8 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground">Filtrar</button>
+            </form>
 
             {overview.overdueAmountCents > 0 ? (
               <div className="flex gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -156,6 +181,8 @@ export default async function ContractsPage({
                     <TableHead>Parcelas</TableHead>
                     <TableHead>Primeiro vencimento</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>Responsável</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -184,6 +211,8 @@ export default async function ContractsPage({
                       <TableCell>
                         <StatusBadge value={contract.status} />
                       </TableCell>
+                      <TableCell>{contract.sourceProposalTitle ? `Proposta: ${contract.sourceProposalTitle}` : "Manual"}{contract.activeVersionNumber ? <div className="text-xs text-muted-foreground">Versão {contract.activeVersionNumber}</div> : null}</TableCell>
+                      <TableCell>{contract.responsibleMemberName ?? "Não atribuído"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -193,7 +222,7 @@ export default async function ContractsPage({
         </Card>
 
         {totalPages > 1 && (
-          <Pagination currentPage={page} totalPages={totalPages} basePath="/contratos" />
+          <Pagination currentPage={page} totalPages={totalPages} basePath={paginationPath} totalRecords={overview.totalCount} />
         )}
       </div>
     </AppShell>

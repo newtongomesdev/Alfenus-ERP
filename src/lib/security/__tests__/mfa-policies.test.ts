@@ -12,6 +12,8 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   isMfaRequired,
   isUserInsideGracePeriod,
+  requiresMfaEnrollment,
+  requiresMfaChallenge,
   requiresStepUpAuthentication,
   canTrustDevice,
   isRoleInHierarchy,
@@ -279,6 +281,20 @@ describe("requiresStepUpAuthentication", () => {
     );
     expect(result).toBe(true);
   });
+
+  it("retorna false para ação não listada", async () => {
+    mockSecurityPolicy({ mfa_require_step_up: true });
+
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresStepUpAuthentication(
+      "login" as any,
+      "firm-1"
+    );
+    expect(result).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -352,5 +368,104 @@ describe("isRoleInHierarchy", () => {
   it("retorna true para visualizador igual ou abaixo de visualizador", () => {
     expect(isRoleInHierarchy("visualizador", "visualizador")).toBe(true);
     expect(isRoleInHierarchy("colaborador", "visualizador")).toBe(true);
+  });
+
+  it("retorna false para role inválido", () => {
+    expect(isRoleInHierarchy("invalid_role" as any, "advogado")).toBe(false);
+    expect(isRoleInHierarchy("advogado", "invalid_role" as any)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// requiresMfaEnrollment
+// ---------------------------------------------------------------------------
+describe("requiresMfaEnrollment", () => {
+  it("retorna true quando MFA é obrigatório e usuário não tem enrollment", async () => {
+    mockSecurityPolicy({ mfa_enforcement_mode: "obrigatorio_todos" });
+
+    const enrollmentQb = createMockQueryBuilder(null);
+    mockFrom.mockReturnValueOnce(enrollmentQb);
+
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresMfaEnrollment("advogado", "firm-1", "user-1");
+    expect(result).toBe(true);
+  });
+
+  it("retorna false quando MFA não é obrigatório", async () => {
+    mockSecurityPolicy({ mfa_enforcement_mode: "desabilitado" });
+
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresMfaEnrollment("advogado", "firm-1", "user-1");
+    expect(result).toBe(false);
+  });
+
+  it("retorna true quando userId não é fornecido", async () => {
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresMfaEnrollment("advogado", "firm-1");
+    expect(result).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// requiresMfaChallenge
+// ---------------------------------------------------------------------------
+describe("requiresMfaChallenge", () => {
+  it("retorna true quando MFA está habilitado e dispositivo não é confiável", async () => {
+    mockSecurityPolicy({ mfa_enforcement_mode: "obrigatorio_todos" });
+
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresMfaChallenge("advogado", "firm-1", false);
+    expect(result).toBe(true);
+  });
+
+  it("retorna false quando dispositivo é confiável e política permite", async () => {
+    mockSecurityPolicy({
+      mfa_enforcement_mode: "obrigatorio_todos",
+      mfa_allow_trusted_devices: true,
+    });
+
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresMfaChallenge("advogado", "firm-1", true);
+    expect(result).toBe(false);
+  });
+
+  it("retorna true quando dispositivo é confiável mas política não permite", async () => {
+    mockSecurityPolicy({
+      mfa_enforcement_mode: "obrigatorio_todos",
+      mfa_allow_trusted_devices: false,
+    });
+
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresMfaChallenge("advogado", "firm-1", true);
+    expect(result).toBe(true);
+  });
+
+  it("retorna false quando MFA está desabilitado", async () => {
+    mockSecurityPolicy({ mfa_enforcement_mode: "desabilitado" });
+
+    (getSupabaseAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const result = await requiresMfaChallenge("advogado", "firm-1", false);
+    expect(result).toBe(false);
   });
 });

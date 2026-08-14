@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-import { hasSupabaseEnv } from "@/lib/env";
+import { env, hasSupabaseEnv } from "@/lib/env";
+import type { Database } from "@/lib/supabase/types";
 
 const protectedRoutes = [
   "/dashboard",
@@ -32,12 +34,46 @@ const protectedRoutes = [
   "/onboarding",
 ];
 
-export function proxy(request: NextRequest) {
+const proposalWriteRoles = new Set(["proprietario", "administrador", "advogado"]);
+
+function isProposalWriteRoute(pathname: string) {
+  return pathname === "/propostas/nova" || /^\/propostas\/[^/]+\/editar$/.test(pathname);
+}
+
+async function guardProposalWriteRoute(request: NextRequest) {
+  const response = NextResponse.next();
+  const supabase = createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL!, env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (cookiesToSet) => cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options)),
+    },
+  });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.redirect(new URL("/entrar", request.url));
+  const { data: member } = await supabase.from("law_firm_members").select("role").eq("user_id", user.id).eq("status", "ativo").limit(1).maybeSingle();
+  const role = String(member?.role ?? "").trim().toLowerCase();
+  if (!proposalWriteRoles.has(role)) return NextResponse.redirect(new URL("/propostas", request.url));
+  return response;
+}
+
+export async function proxy(request: NextRequest) {
   if (!hasSupabaseEnv()) {
     return addSecurityHeaders(NextResponse.next());
   }
 
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/p" || pathname.startsWith("/p/")) {
+    const response = addSecurityHeaders(NextResponse.next());
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    response.headers.set("Referrer-Policy", "no-referrer");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return response;
+  }
+
+  if (isProposalWriteRoute(pathname)) {
+    return addSecurityHeaders(await guardProposalWriteRoute(request));
+  }
 
   // Ignorar rotas internas do Next.js e API
   if (
