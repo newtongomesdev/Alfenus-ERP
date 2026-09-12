@@ -1,0 +1,4 @@
+import { describe, expect, it } from "vitest";
+import { evaluateSignatureEnvelopeReadiness } from "./readiness";
+const source = { contractId: "c", contractDocumentId: "d", contractVersionId: "v", status: "completed", documentHash: "a".repeat(64), fileSize: 100, pageCount: 1, title: "Contrato", stale: false, archived: false };
+describe("signature envelope readiness", () => { it("blocks incomplete signers and accepts normalized sequential signers", () => { const blocked = evaluateSignatureEnvelopeReadiness(source, [], "", {}); expect(blocked.ready).toBe(false); const ready = evaluateSignatureEnvelopeReadiness(source, [{ signerType: "person", role: "cliente", name: "Pessoa", email: " PESSOA@EXAMPLE.COM ", signingOrder: 1, requiresIdentityVerification: false }], "v1", { contractDocumentId: "d", documentHash: source.documentHash }); expect(ready.ready).toBe(true); expect(ready.normalizedSigners[0].email).toBe("pessoa@example.com"); }); });

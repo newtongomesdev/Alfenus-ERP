@@ -1,0 +1,3 @@
+const { Client } = require("pg");
+const client = new Client({ connectionString: "postgresql://postgres.lmfjntuofpdjojcuybkl:041052.11setembB@aws-1-us-west-2.pooler.supabase.com:5432/postgres", ssl: { rejectUnauthorized: false } });
+(async () => { await client.connect(); const result = await client.query("select o.id,o.status,o.document_id,d.status as document_status,d.safe_error_code from contract_document_operations o left join contract_documents d on d.id=o.document_id join contracts c on c.id=o.contract_id where c.service_description like 'document-runtime-%' order by o.created_at desc limit 5"); console.log(JSON.stringify(result.rows)); await client.end(); })().catch((error) => { console.error(error); process.exitCode = 1; });

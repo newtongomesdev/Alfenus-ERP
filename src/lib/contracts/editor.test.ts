@@ -1,0 +1,9 @@
+import { describe, expect, it } from "vitest";
+import { buildContractVersionHash, compareContractVersions, validateContractDraft, type ContractDraft } from "./editor";
+
+const draft = (): ContractDraft => ({ title: "Contrato de honorários", content: "Texto", parties: { contractor: { name: "Alfenus Advocacia" }, client: { name: "Cliente" } }, clauses: ["object","fees","term","termination","confidentiality","data_protection"].map((type,order)=>({title:type,content:"ok",order,type:type as ContractDraft["clauses"][number]["type"],required:true,enabled:true})), terms: { currency:"BRL",subtotalCents:10000,discountCents:0,totalCents:10000,entryAmountCents:1000,installmentCount:2,installmentAmountCents:4500 }, metadata: { jurisdiction:"São Paulo",language:"pt-BR" }, schemaVersion:1 });
+describe("contract editor domain",()=>{
+  it("keeps the hash independent from object property order",()=>{const original=draft();const reordered={...original,parties:{client:original.parties.client,contractor:original.parties.contractor}};expect(buildContractVersionHash(original)).toBe(buildContractVersionHash(reordered));});
+  it("reports structured readiness blockers",()=>{const incomplete=draft();incomplete.parties.client.name="";incomplete.clauses[0].content="";const issues=validateContractDraft(incomplete);expect(issues.some((item)=>item.code==="client_name"&&item.blocking)).toBe(true);expect(issues.some((item)=>item.code==="required_clause"&&item.blocking)).toBe(true);});
+  it("compares financial and clause changes without JSON output",()=>{const next=draft();next.terms.totalCents=12000;next.clauses.push({title:"Especial",content:"novo",order:6,type:"custom",required:false,enabled:true});const changes=compareContractVersions(draft(),next);expect(changes).toEqual(expect.arrayContaining([expect.objectContaining({changeType:"financial",deltaCents:2000}),expect.objectContaining({changeType:"clause_added",field:"Especial"})]));});
+});

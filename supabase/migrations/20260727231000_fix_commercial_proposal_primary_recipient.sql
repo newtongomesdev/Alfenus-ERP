@@ -1,0 +1,11 @@
+create or replace function public.upsert_commercial_proposal_recipient(p_proposal_id uuid, p_recipient jsonb)
+returns table(recipient_id uuid) language plpgsql security definer set search_path = public as $$
+declare v_actor uuid := (select auth.uid()); v_firm uuid; v_id uuid := nullif(p_recipient->>'id','')::uuid; v_primary boolean := coalesce((p_recipient->>'isPrimary')::boolean,false);
+begin
+  select m.law_firm_id into v_firm from public.law_firm_members m where m.user_id=v_actor and m.status='ativo' order by m.created_at limit 1;
+  if v_firm is null or not public.has_law_firm_role(v_firm,array['proprietario','administrador','advogado']::public.member_role[]) then raise exception 'PROPOSAL_PERMISSION_DENIED' using errcode='42501'; end if;
+  if not exists(select 1 from public.commercial_proposals p where p.id=p_proposal_id and p.law_firm_id=v_firm) then raise exception 'PROPOSAL_NOT_FOUND' using errcode='P0002'; end if;
+  if v_primary then update public.commercial_proposal_recipients set is_primary=false where proposal_id=p_proposal_id and law_firm_id=v_firm and (v_id is null or id is distinct from v_id); end if;
+  if v_id is null then insert into public.commercial_proposal_recipients(law_firm_id,proposal_id,client_id,contact_id,recipient_type,name,email,phone,company_name,is_primary) values(v_firm,p_proposal_id,nullif(p_recipient->>'clientId','')::uuid,nullif(p_recipient->>'contactId','')::uuid,coalesce(p_recipient->>'recipientType','other'),btrim(p_recipient->>'name'),p_recipient->>'email',p_recipient->>'phone',p_recipient->>'companyName',v_primary) returning id into v_id; else update public.commercial_proposal_recipients r set recipient_type=coalesce(p_recipient->>'recipientType',r.recipient_type),name=btrim(p_recipient->>'name'),email=p_recipient->>'email',phone=p_recipient->>'phone',company_name=p_recipient->>'companyName',is_primary=v_primary where r.id=v_id and r.proposal_id=p_proposal_id and r.law_firm_id=v_firm; if not found then raise exception 'PROPOSAL_NOT_FOUND' using errcode='P0002'; end if; end if;
+  return query select v_id;
+exception when others then if SQLERRM in ('PROPOSAL_PERMISSION_DENIED','PROPOSAL_NOT_FOUND') then raise; end if; raise exception 'PROPOSAL_VALIDATION_ERROR' using errcode='22023'; end $$;
