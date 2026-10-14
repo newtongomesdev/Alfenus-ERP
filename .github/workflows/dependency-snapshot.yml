@@ -1,0 +1,36 @@
+name: Dependency graph snapshot
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - package-lock.json
+      - scripts/dependency_snapshot.mjs
+      - .github/workflows/dependency-snapshot.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-snapshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  submit:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate and submit lockfile snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: node scripts/dependency_snapshot.mjs
