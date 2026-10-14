@@ -26,7 +26,10 @@ jobs:
       - run: npm run db:migrations:check
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm test -- --reporter=dot
+      - name: Run tests in the application timezone
+        env:
+          TZ: America/Sao_Paulo
+        run: npm test -- --reporter=dot
       - name: Build with non-production public placeholders
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
