@@ -1,7 +1,8 @@
 import { addDays, format, startOfDay, startOfMonth, endOfMonth } from "date-fns";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { SoloOverview, SoloOverviewResult } from "@/lib/solo/types";
-import { getSoloOverviewStatus } from "@/lib/solo/ux";
+import { getOverviewCount, getSoloOverviewStatus } from "@/lib/solo/ux";
+import { calculateSoloCashFlow } from "@/lib/solo/finance";
 
 export async function getSoloOverview(): Promise<SoloOverviewResult> {
   const supabase = await getSupabaseServerClient();
@@ -54,7 +55,7 @@ export async function getSoloOverview(): Promise<SoloOverviewResult> {
     // Today's tasks
     supabase
       .from("tasks")
-      .select("id, title, status, due_at, priority")
+      .select("id, title, status, due_at, priority", { count: "exact" })
       .eq("law_firm_id", lawFirmId)
       .or(`responsible_member_id.eq.${memberId},responsible_member_id.is.null`)
       .in("status", ["pendente", "em_andamento"])
@@ -65,7 +66,7 @@ export async function getSoloOverview(): Promise<SoloOverviewResult> {
     // Upcoming deadlines (next 7 days)
     supabase
       .from("deadlines")
-      .select("id, title, due_date, due_time, priority")
+      .select("id, title, due_date, due_time, priority", { count: "exact" })
       .eq("law_firm_id", lawFirmId)
       .in("status", ["pendente", "em_andamento"])
       .lte("due_date", format(addDays(today, 7), "yyyy-MM-dd"))
@@ -75,7 +76,7 @@ export async function getSoloOverview(): Promise<SoloOverviewResult> {
     // Today's appointments
     supabase
       .from("appointments")
-      .select("id, title, starts_at, type")
+      .select("id, title, starts_at, type", { count: "exact" })
       .eq("law_firm_id", lawFirmId)
       .gte("starts_at", today.toISOString())
       .lt("starts_at", addDays(today, 1).toISOString())
@@ -85,7 +86,7 @@ export async function getSoloOverview(): Promise<SoloOverviewResult> {
     // Overdue installments
     supabase
       .from("installments")
-      .select("id, final_amount_cents, paid_amount_cents, due_date, status, clients(name)")
+      .select("id, final_amount_cents, paid_amount_cents, due_date, status, clients(name)", { count: "exact" })
       .eq("law_firm_id", lawFirmId)
       .lt("due_date", format(today, "yyyy-MM-dd"))
       .in("status", ["pendente", "vencendo", "atrasada", "parcialmente_paga"])
@@ -95,8 +96,9 @@ export async function getSoloOverview(): Promise<SoloOverviewResult> {
     // Payments received this month
     supabase
       .from("payments")
-      .select("id, amount_cents")
+      .select("id, amount_cents, reversed_at")
       .eq("law_firm_id", lawFirmId)
+      .is("reversed_at", null)
       .gte("paid_at", monthStart.toISOString())
       .lte("paid_at", monthEnd.toISOString()),
 
@@ -232,19 +234,25 @@ export async function getSoloOverview(): Promise<SoloOverviewResult> {
     };
   });
 
-  const payments = (paymentsResult.data ?? []) as Array<{ amount_cents: number }>;
+  const payments = (paymentsResult.data ?? []) as Array<{ amount_cents: number; reversed_at: string | null }>;
   const paidExpenses = (paidExpensesResult.data ?? []) as Array<{ amount_cents: number }>;
   const expectedExpenses = (expectedExpensesResult.data ?? []) as Array<{ amount_cents: number }>;
   const expectedInstallments = (expectedInstallmentsResult.data ?? []) as Array<{ final_amount_cents: number; paid_amount_cents: number }>;
   const overdueAmountRows = (overdueAmountResult.data ?? []) as Array<{ final_amount_cents: number; paid_amount_cents: number }>;
 
-  const receivedThisMonth = payments.reduce((sum, p) => sum + ((p.amount_cents as number) ?? 0), 0);
   const paidExpensesThisMonth = paidExpenses.reduce((sum, expense) => sum + ((expense.amount_cents as number) ?? 0), 0);
   const expectedExpensesThisMonth = expectedExpenses.reduce((sum, expense) => sum + ((expense.amount_cents as number) ?? 0), 0);
   const expectedThisMonth = expectedInstallments.reduce(
     (sum, i) => sum + Math.max(((i.final_amount_cents as number) ?? 0) - ((i.paid_amount_cents as number) ?? 0), 0),
     0,
   );
+  const cashFlowSummary = calculateSoloCashFlow({
+    payments,
+    paidExpensesCents: paidExpensesThisMonth,
+    expectedInstallmentsCents: expectedThisMonth,
+    expectedExpensesCents: expectedExpensesThisMonth,
+  });
+  const receivedThisMonth = cashFlowSummary.received;
   const overdueAmount = overdueAmountRows.reduce(
     (sum, i) => sum + Math.max(((i.final_amount_cents as number) ?? 0) - ((i.paid_amount_cents as number) ?? 0), 0),
     0,
@@ -294,16 +302,16 @@ export async function getSoloOverview(): Promise<SoloOverviewResult> {
   });
 
   return { status: "ready", data: {
-    todayTasks: tasks.length,
-    todayDeadlines: deadlines.length,
-    todayAppointments: appointments.length,
-    overdueInstallments: overdueInstallmentList.length,
+    todayTasks: getOverviewCount(tasksResult.count, tasks.length),
+    todayDeadlines: getOverviewCount(deadlinesResult.count, deadlines.length),
+    todayAppointments: getOverviewCount(appointmentsResult.count, appointments.length),
+    overdueInstallments: getOverviewCount(overdueInstallmentsResult.count, overdueInstallmentList.length),
     pendingFollowUps,
     receivedThisMonth,
     paidExpensesThisMonth,
-    cashFlowThisMonth: receivedThisMonth - paidExpensesThisMonth,
+    cashFlowThisMonth: cashFlowSummary.cashFlow,
     expectedExpensesThisMonth,
-    projectedCashFlowThisMonth: receivedThisMonth + expectedThisMonth - paidExpensesThisMonth - expectedExpensesThisMonth,
+    projectedCashFlowThisMonth: cashFlowSummary.projectedCashFlow,
     expectedThisMonth,
     overdueAmount,
     clientsNeedingAttention: clientsNeedingAttentionList.length,

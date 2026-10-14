@@ -10,6 +10,7 @@ import {
   getCurrentInterfaceModeAction,
   switchInterfaceModeAction,
 } from "@/lib/solo/actions";
+import { isNavigationReady } from "@/lib/solo/ux";
 
 export function AppShell({
   children,
@@ -25,27 +26,40 @@ export function AppShell({
   const router = useRouter();
   const [interfaceMode, setInterfaceMode] = useState<"simples" | "completa" | "personalizada">(interfaceModeProp ?? "completa");
   const [modeError, setModeError] = useState<string | null>(null);
+  const shouldResolveMode = isAuthenticated ?? Boolean(memberName);
+  const [modeResolved, setModeResolved] = useState(Boolean(interfaceModeProp) || !shouldResolveMode);
 
   // The server context is authoritative. This also avoids querying optional
   // Solo columns in environments where those migrations are not installed.
 
-  const shouldResolveMode = isAuthenticated ?? Boolean(memberName);
-  const navigationReady = Boolean(interfaceModeProp) || !shouldResolveMode;
+  const navigationReady = isNavigationReady({
+    authenticated: shouldResolveMode,
+    hasServerMode: Boolean(interfaceModeProp),
+    modeResolved,
+  });
   const isSimple = interfaceMode === "simples";
 
   useEffect(() => {
     if (interfaceModeProp) {
       setInterfaceMode(interfaceModeProp);
+      setModeResolved(true);
       return;
     }
     if (!shouldResolveMode) {
       setInterfaceMode("completa");
+      setModeResolved(true);
       return;
     }
 
     let active = true;
+    setModeResolved(false);
     getCurrentInterfaceModeAction().then((mode) => {
       if (active) setInterfaceMode(mode);
+    }).catch((error: unknown) => {
+      console.error("[layout/interface-mode] falha ao carregar modo", error);
+      if (active) setInterfaceMode("completa");
+    }).finally(() => {
+      if (active) setModeResolved(true);
     });
     return () => {
       active = false;

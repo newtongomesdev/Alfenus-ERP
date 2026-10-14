@@ -6,6 +6,7 @@ import { Check, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 
 import { createSoloCaseAction } from "@/lib/solo/actions";
 import type { SoloCaseInput } from "@/lib/solo/schemas";
+import { formatCentsForBrazilianInput, parseBrazilianCurrencyToCents } from "@/lib/solo/money";
 import { archiveSoloCaseDraftAction, saveSoloCaseDraftAction, searchSoloClientsAction } from "@/app/solo/novo-caso/actions";
 import { PRACTICE_AREAS } from "@/lib/solo/constants";
 import { Button } from "@/components/ui/button";
@@ -31,16 +32,12 @@ const initialForm: WizardForm = {
   createDeadline: false, deadlineTitle: "", deadlineDate: null, deadlinePriority: "normal",
 };
 
-function toCents(value: string) {
-  const normalized = value.replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
-  const number = Number(normalized);
-  return Number.isFinite(number) ? Math.max(0, Math.round(number * 100)) : 0;
-}
-
 export function NewCaseWizard({ clients: initialClients, initialDraft, draftId }: { clients: ClientOption[]; initialDraft: Partial<SoloCaseInput> | null; draftId: string | null }) {
   const router = useRouter();
   const [step, setStep] = useState(initialDraft?.createDeadline ? 3 : initialDraft?.createContract ? 2 : initialDraft?.caseTitle ? 1 : 0);
   const [form, setForm] = useState<WizardForm>({ ...initialForm, ...(initialDraft ?? {}) });
+  const [contractTotalText, setContractTotalText] = useState(formatCentsForBrazilianInput(initialDraft?.contractTotalAmountCents ?? 0));
+  const [contractUpfrontText, setContractUpfrontText] = useState(formatCentsForBrazilianInput(initialDraft?.contractUpfrontAmountCents ?? 0));
   const [clients, setClients] = useState(initialClients);
   const [clientSearch, setClientSearch] = useState("");
   const [isSearchingClients, startClientSearch] = useTransition();
@@ -147,8 +144,8 @@ export function NewCaseWizard({ clients: initialClients, initialDraft, draftId }
             <label className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 text-sm"><input type="checkbox" checked={form.createContract} onChange={(event) => update("createContract", event.target.checked)} /><span><span className="block font-medium">Criar cobrança de honorários</span><span className="text-muted-foreground">Opcional. Você poderá criar ou ajustar depois.</span></span></label>
             {form.createContract && <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2"><Label htmlFor="service-description">Serviço contratado *</Label><Input id="service-description" value={form.contractServiceDescription} onChange={(event) => update("contractServiceDescription", event.target.value)} placeholder="Ex.: Acompanhamento administrativo" /></div>
-              <div className="space-y-2"><Label htmlFor="contract-total">Valor total *</Label><Input id="contract-total" value={form.contractTotalAmountCents ? String(form.contractTotalAmountCents / 100) : ""} onChange={(event) => update("contractTotalAmountCents", toCents(event.target.value))} inputMode="decimal" placeholder="0,00" /></div>
-              <div className="space-y-2"><Label htmlFor="contract-upfront">Entrada</Label><Input id="contract-upfront" value={form.contractUpfrontAmountCents ? String(form.contractUpfrontAmountCents / 100) : ""} onChange={(event) => update("contractUpfrontAmountCents", toCents(event.target.value))} inputMode="decimal" placeholder="0,00" /></div>
+              <div className="space-y-2"><Label htmlFor="contract-total">Valor total *</Label><Input id="contract-total" value={contractTotalText} onChange={(event) => { setContractTotalText(event.target.value); update("contractTotalAmountCents", parseBrazilianCurrencyToCents(event.target.value)); }} inputMode="decimal" placeholder="0,00" /></div>
+              <div className="space-y-2"><Label htmlFor="contract-upfront">Entrada</Label><Input id="contract-upfront" value={contractUpfrontText} onChange={(event) => { setContractUpfrontText(event.target.value); update("contractUpfrontAmountCents", parseBrazilianCurrencyToCents(event.target.value)); }} inputMode="decimal" placeholder="0,00" /></div>
               <div className="space-y-2"><Label htmlFor="contract-installments">Parcelas</Label><Input id="contract-installments" type="number" min="1" max="60" value={form.contractInstallmentsCount} onChange={(event) => update("contractInstallmentsCount", Math.max(1, Number(event.target.value) || 1))} /></div>
               <div className="space-y-2"><Label htmlFor="first-due-date">Primeiro vencimento *</Label><Input id="first-due-date" type="date" value={form.contractFirstDueDate ?? ""} onChange={(event) => update("contractFirstDueDate", event.target.value || null)} /></div>
               <div className="space-y-2"><Label htmlFor="payment-method">Forma de pagamento *</Label><select id="payment-method" className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm" value={form.contractPaymentMethod} onChange={(event) => update("contractPaymentMethod", event.target.value)}><option value="pix">PIX</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="cartao">Cartão</option><option value="dinheiro">Dinheiro</option></select></div>

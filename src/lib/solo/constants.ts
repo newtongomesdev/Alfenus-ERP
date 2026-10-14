@@ -142,35 +142,6 @@ export const PRACTICE_AREAS = [
   { key: "outro", name: "Outra Área", icon: "folder" },
 ];
 
-// Charge message templates for WhatsApp
-export const CHARGE_MESSAGE_TEMPLATES = [
-  {
-    id: "cobranca_amigavel",
-    name: "Cobrança Amigável",
-    message: "Olá {cliente}! Tudo bem?\n\nPassando para lembrar que a parcela {parcela} do contrato {contrato} venceu em {vencimento}.\n\nValor: R$ {valor}\n\nCaso já tenha efetuado o pagamento, desconsidere esta mensagem.\n\nObrigado!",
-  },
-  {
-    id: "cobranca_urgente",
-    name: "Cobrança Urgente",
-    message: "Olá {cliente},\n\nGostaria de conversar sobre a parcela {parcela} do nosso contrato que venceu em {vencimento} e ainda não foi quitada.\n\nValor em aberto: R$ {valor}\n\nÉ importante regularizarmos isso para evitar maiores complicações. Podemos conversar?\n\nAguardo seu retorno.",
-  },
-  {
-    id: "parcelamento_negociado",
-    name: "Proposta de Parcelamento",
-    message: "Prezado(a) {cliente},\n\nConforme conversamos, segue proposta para regularização do débito:\n\nValor total: R$ {valor_total}\nEntrada: R$ {entrada}\nParcelamento: {quantidade}x de R$ {valor_parcela}\n\nCaso concorde, enviarei o contrato de renegociação.\n\nAguardo sua confirmação.",
-  },
-  {
-    id: "notificacao_judicial",
-    name: "Notificação Pré-Judicial",
-    message: "{cliente},\n\nVimos por meio desta notificá-lo(a) sobre a inadimplência do contrato {contrato}, com saldo devedor de R$ {valor}.\n\nCaso não haja regularização no prazo de {prazo} dias, serão tomadas medidas judiciais cabíveis para recuperação do crédito, com incidência de custas, honorários advocatícios de até 20% e correção monetária.\n\nRegularize seu débito e evite maiores complicações.",
-  },
-  {
-    id: "confirmacao_recebimento",
-    name: "Confirmação de Recebimento",
-    message: "Olá {cliente}!\n\nConfirmo o recebimento do pagamento da parcela {parcela} no valor de R$ {valor}.\n\nAgradeço a pontualidade!\n\nQualquer dúvida, estou à disposição.",
-  },
-];
-
 // Quick action items for solo mode
 export const QUICK_ACTIONS = [
   { id: "new_client", name: "Novo Cliente", icon: "user-plus", href: "/clientes/novo", color: "blue" },

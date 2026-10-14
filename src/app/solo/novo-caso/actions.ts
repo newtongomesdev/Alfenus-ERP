@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getAppContext } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { getClients } from "@/lib/clients/queries";
-import { soloCaseInputSchema, type SoloCaseInput } from "@/lib/solo/schemas";
+import { soloCaseDraftSchema, type SoloCaseInput } from "@/lib/solo/schemas";
 
 const searchSchema = z.string().trim().max(100);
 
@@ -26,7 +26,7 @@ export async function saveSoloCaseDraftAction(input: Partial<SoloCaseInput>, dra
   if (context.status !== "ready" || !context.member || !context.lawFirm || !can(context.member.role, "processos.criar")) {
     return { ok: false as const, error: "Seu perfil não pode salvar rascunhos." };
   }
-  const parsed = soloCaseInputSchema.partial().safeParse(input);
+  const parsed = soloCaseDraftSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Revise os dados informados." };
   const supabase = await (await import("@/lib/supabase/server")).getSupabaseServerClient();
   if (!supabase) return { ok: false as const, error: "O banco de dados está indisponível." };

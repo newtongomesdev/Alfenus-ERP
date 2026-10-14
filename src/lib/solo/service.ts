@@ -147,21 +147,18 @@ export async function disableModule(lawFirmId: string, moduleKey: ModuleKey): Pr
 
 export async function switchInterfaceMode(lawFirmId: string, newMode: InterfaceMode): Promise<void> {
   const supabase = await getSupabaseServerClient();
-  if (!supabase) return;
+  if (!supabase) throw new Error("Supabase indisponível para salvar o modo da interface.");
 
-  if (newMode === "simples") {
-    await firmQuery(supabase)
-      .update({
-        interface_mode: newMode,
-        hidden_modules: SOLO_HIDDEN_MODULES,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", lawFirmId);
-  } else {
-    await firmQuery(supabase)
-      .update({ interface_mode: newMode, updated_at: new Date().toISOString() })
-      .eq("id", lawFirmId);
-  }
+  const update = newMode === "simples"
+    ? { interface_mode: newMode, hidden_modules: SOLO_HIDDEN_MODULES, updated_at: new Date().toISOString() }
+    : { interface_mode: newMode, updated_at: new Date().toISOString() };
+  const { data, error } = await firmQuery(supabase)
+    .update(update)
+    .eq("id", lawFirmId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Nenhum escritório foi atualizado ao alterar o modo da interface.");
 }
 
 // ── Get recommended modules based on operation profile ──────

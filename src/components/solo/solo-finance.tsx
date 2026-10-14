@@ -1,17 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { formatCurrencyFromCents, formatDate } from "@/lib/formatters";
-import { CHARGE_MESSAGE_TEMPLATES } from "@/lib/solo/constants";
-import { Copy, Check, MessageSquare } from "lucide-react";
+import { CollectionMessageButton } from "@/components/solo/collection-message-button";
 
 type OverdueInstallment = {
   id: string;
   client_name: string;
+  number: number;
   amount_cents: number;
   due_date: string;
   status: string;
@@ -28,21 +25,6 @@ export function SoloFinance({
   overdueAmount: number;
   overdueInstallments: OverdueInstallment[];
 }) {
-  const [showMessages, setShowMessages] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  function copyMessage(template: string, clientName?: string) {
-    const filled = template
-      .replace("{nome}", clientName || " cliente")
-      .replace("{valor}", formatCurrencyFromCents(0))
-      .replace("{servico}", "serviço")
-      .replace("{data}", formatDate(new Date().toISOString()))
-      .replace("{advogado}", "Dr(a).");
-    navigator.clipboard.writeText(filled);
-    setCopiedKey(template);
-    setTimeout(() => setCopiedKey(null), 2000);
-  }
-
   return (
     <div className="space-y-6">
       {/* Resumo financeiro */}
@@ -85,6 +67,13 @@ export function SoloFinance({
                     {formatCurrencyFromCents(inst.amount_cents)}
                   </span>
                   <Badge variant="outline" className="text-xs">{inst.status}</Badge>
+                  <CollectionMessageButton installment={{
+                    clientName: inst.client_name,
+                    contractDescription: null,
+                    installmentNumber: inst.number,
+                    remainingAmountCents: inst.amount_cents,
+                    dueDate: inst.due_date,
+                  }} iconOnly />
                 </div>
               </div>
             ))}
@@ -92,50 +81,6 @@ export function SoloFinance({
         </Card>
       )}
 
-      {/* Régua de cobrança - mensagens copiáveis */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MessageSquare className="size-4" />
-              Mensagens de cobrança
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMessages(!showMessages)}
-            >
-              {showMessages ? "Ocultar" : "Ver mensagens"}
-            </Button>
-          </div>
-        </CardHeader>
-        {showMessages && (
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Copie e envie manualmente. Nenhuma mensagem é enviada automaticamente.
-            </p>
-            {CHARGE_MESSAGE_TEMPLATES.map((tmpl) => (
-              <div key={tmpl.id} className="rounded-lg border p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium">{tmpl.name}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyMessage(tmpl.message)}
-                  >
-                    {copiedKey === tmpl.message ? (
-                      <Check className="size-4 text-green-500" />
-                    ) : (
-                      <Copy className="size-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{tmpl.message}</p>
-              </div>
-            ))}
-          </CardContent>
-        )}
-      </Card>
     </div>
   );
 }

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { SoloOverview } from "@/lib/solo/types";
 import { formatCurrencyFromCents, formatDate } from "@/lib/formatters";
+import { getCalendarDaysUntil } from "@/lib/solo/ux";
 import { InactiveClients } from "@/components/solo/inactive-clients";
 
 // ── Priority color helper ───────────────────────────────────
@@ -56,7 +57,7 @@ const quickActions = [
   { label: "Cadastrar cliente", href: "/clientes/novo", icon: Users },
   { label: "Criar caso", href: "/solo/novo-caso", icon: Scale },
   { label: "Agendar compromisso", href: "/agenda#novo-compromisso", icon: CalendarDays },
-  { label: "Recebimentos", href: "/recebimentos", icon: DollarSign },
+  { label: "Registrar pagamento", href: "/recebimentos?registrar=1", icon: DollarSign },
 ];
 
 export function MeuDiaClient({
@@ -92,7 +93,7 @@ export function MeuDiaClient({
       <section aria-label="Resumo do dia" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <SummaryCard
           icon={<Clock className="size-5 text-blue-500" />}
-          label="Tarefas hoje"
+          label="Tarefas vencidas / hoje"
           value={overview.todayTasks}
         />
         <SummaryCard
@@ -123,9 +124,9 @@ export function MeuDiaClient({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {overview.appointments.length === 0 && overview.tasks.length === 0 && overview.deadlines.length === 0 && overview.overdueInstallmentList.length === 0 && overview.pendingFollowUps === 0 && (
+            {overview.appointments.length === 0 && overview.tasks.length === 0 && (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Seu dia está livre.</p>
+                <p className="text-sm text-muted-foreground">Nenhuma tarefa ou compromisso para hoje.</p>
                 <Link
                   href="/agenda#novo-compromisso"
                   className="inline-flex h-7 items-center rounded-md border px-2.5 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -136,10 +137,12 @@ export function MeuDiaClient({
             )}
 
             {overview.appointments.map((apt) => (
-              <div key={apt.id} className="flex items-start gap-3">
+                <div key={apt.id} className="flex items-start gap-3">
                 <Circle className="size-2 mt-1.5 fill-purple-500 text-purple-500" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{apt.title}</p>
+                  <Link href={`/agenda/${apt.id}/editar`} className="text-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    {apt.title}
+                  </Link>
                   <p className="text-xs text-muted-foreground">
                     {new Date(apt.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                   </p>
@@ -182,11 +185,9 @@ export function MeuDiaClient({
               <p className="text-sm text-muted-foreground">Nenhum prazo vencido ou previsto para os próximos 7 dias.</p>
             ) : (
               overview.deadlines.map((dl) => {
-                const daysLeft = Math.ceil(
-                  (new Date(dl.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-                );
+                const daysLeft = getCalendarDaysUntil(dl.due_date);
                 return (
-                  <Link key={dl.id} href={`/prazos/${dl.id}`} className="flex items-start justify-between gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Link key={dl.id} href={`/prazos/${dl.id}/editar`} className="flex items-start justify-between gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{dl.title}</p>
                       <p className="text-xs text-muted-foreground">

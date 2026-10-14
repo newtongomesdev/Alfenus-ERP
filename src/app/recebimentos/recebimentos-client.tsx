@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 
@@ -23,13 +23,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { StatusBadge } from "@/components/status-badge";
 import { ReversePaymentButton } from "@/components/reverse-payment-button";
 import { formatCurrencyFromCents, formatDate } from "@/lib/formatters";
+import type { ReceivableItem } from "@/lib/receivables/queries";
+import { CollectionMessageButton } from "@/components/solo/collection-message-button";
 
 import { RegisterPaymentDialog } from "./register-payment-dialog";
 
 
-export function RecebimentosClient({ paginatedInstallments, openInstallments, filteredCount, totalCount, canRegister }: any) {
-  const [dialogOpen, setDialogOpen] = useState(false);
+export function RecebimentosClient({
+  paginatedInstallments,
+  openInstallments,
+  filteredCount,
+  totalCount,
+  canRegister,
+  initiallyOpen = false,
+}: {
+  paginatedInstallments: ReceivableItem[];
+  openInstallments: ReceivableItem[];
+  filteredCount: number;
+  totalCount: number;
+  canRegister: boolean;
+  initiallyOpen?: boolean;
+}) {
+  const [dialogOpen, setDialogOpen] = useState(initiallyOpen);
   const [selectedInstallmentId, setSelectedInstallmentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initiallyOpen) setDialogOpen(true);
+  }, [initiallyOpen]);
 
   const handleOpenDialog = (installmentId?: string) => {
     setSelectedInstallmentId(installmentId ?? null);
@@ -74,7 +94,7 @@ export function RecebimentosClient({ paginatedInstallments, openInstallments, fi
               </TableHeader>
               <TableBody>
                 { }
-                {paginatedInstallments.map((item: any) => (
+                {paginatedInstallments.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="font-medium">{item.clientName ?? "Cliente"}</div>
@@ -99,6 +119,18 @@ export function RecebimentosClient({ paginatedInstallments, openInstallments, fi
                       <StatusBadge value={item.displayStatus} />
                     </TableCell>
                     <TableCell>
+                      {item.displayStatus === "atrasada" && item.remainingAmountCents > 0 && canRegister ? (
+                        <CollectionMessageButton
+                          iconOnly
+                          installment={{
+                            clientName: item.clientName,
+                            contractDescription: item.contractDescription,
+                            installmentNumber: item.number,
+                            remainingAmountCents: item.remainingAmountCents,
+                            dueDate: item.dueDate,
+                          }}
+                        />
+                      ) : null}
                       <DropdownMenu>
                         <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-8" />}>
                           <MoreHorizontal className="size-4" />

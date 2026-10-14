@@ -28,7 +28,7 @@ function RecebivablesLoadError() {
   return <AppShell memberName={null}><div className="space-y-6"><PageHeader title="Recebimentos" description="Acompanhe parcelas, pagamentos e inadimplência." /><Card className="rounded-lg border-destructive/30"><CardContent className="flex items-start gap-3 p-6"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><p className="font-medium">Não foi possível carregar os recebimentos.</p><p className="mt-1 text-sm text-muted-foreground">Confira se as migrations financeiras foram aplicadas no Supabase e tente novamente.</p><Link href="/recebimentos" className="mt-4 inline-flex rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted">Tentar novamente</Link></div></CardContent></Card></div></AppShell>;
 }
 
-export default async function RecebivablesPage({ searchParams }: { searchParams: Promise<{ registrado?: string; cobranca?: string; erro?: string; msg?: string; estornado?: string; duplicado?: string; page?: string; de?: string; ate?: string; status?: string }> }) {
+export default async function RecebivablesPage({ searchParams }: { searchParams: Promise<{ registrado?: string; cobranca?: string; erro?: string; msg?: string; estornado?: string; duplicado?: string; registrar?: string; page?: string; de?: string; ate?: string; status?: string }> }) {
   const context = await getAppContext();
   const params = await searchParams;
   const PAGE_SIZE = 20;
@@ -128,6 +128,7 @@ export default async function RecebivablesPage({ searchParams }: { searchParams:
       filteredCount={filteredInstallments.length}
       totalCount={overview.installments.length}
       canRegister={canRegister}
+      initiallyOpen={params.registrar === "1" && canRegister}
     />
 
     <Pagination currentPage={page} totalPages={filteredTotalPages} basePath={basePath} totalRecords={filteredInstallments.length} />

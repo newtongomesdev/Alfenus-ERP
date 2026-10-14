@@ -21,9 +21,9 @@ const canonicalMigration = resolve(migrationsDir, "20260726200000_alfenus_canoni
 
 function readMigration(filename: string): string {
   try {
-    const canonical = readFileSync(canonicalMigration, "utf-8");
+    const canonical = readFileSync(canonicalMigration, "utf-8").replace(/\r\n/g, "\n");
     const section = canonical.match(new RegExp(`-- >>> canonical source: ${filename}\\n([\\s\\S]*?)\\n-- <<< canonical source: ${filename}`));
-    return section?.[1] ?? canonical;
+    return section?.[1] ?? "";
   } catch {
     return "";
   };

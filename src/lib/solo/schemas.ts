@@ -1,16 +1,16 @@
 import { z } from "zod";
 
-export const soloCaseInputSchema = z.object({
+const soloCaseBaseSchema = z.object({
   existingClientId: z.string().uuid().nullable(),
   clientName: z.string().trim().max(160),
   clientPhone: z.string().trim().max(40),
   clientEmail: z.string().trim().max(254),
   clientDocument: z.string().trim().max(40),
   clientInterestArea: z.string().trim().max(80),
-  caseTitle: z.string().trim().min(2).max(240),
+  caseTitle: z.string().trim().max(240),
   caseKind: z.enum(["judicial", "extrajudicial"]),
   caseNumber: z.string().trim().max(80),
-  actionType: z.string().trim().min(2).max(160),
+  actionType: z.string().trim().max(160),
   opposingParty: z.string().trim().max(240),
   notes: z.string().trim().max(4000),
   createContract: z.boolean(),
@@ -24,12 +24,22 @@ export const soloCaseInputSchema = z.object({
   deadlineTitle: z.string().trim().max(240),
   deadlineDate: z.string().date().nullable(),
   deadlinePriority: z.enum(["baixa", "normal", "alta", "urgente"]),
-}).superRefine((input, ctx) => {
+});
+
+export const soloCaseDraftSchema = soloCaseBaseSchema.partial();
+
+export const soloCaseInputSchema = soloCaseBaseSchema.superRefine((input, ctx) => {
   if (!input.existingClientId && input.clientName.length < 2) {
     ctx.addIssue({ code: "custom", path: ["clientName"], message: "Informe o cliente." });
   }
   if (input.caseKind === "judicial" && !input.caseNumber) {
     ctx.addIssue({ code: "custom", path: ["caseNumber"], message: "Informe o número do processo judicial." });
+  }
+  if (input.caseTitle.length < 2) {
+    ctx.addIssue({ code: "custom", path: ["caseTitle"], message: "Informe o nome do caso." });
+  }
+  if (input.actionType.length < 2) {
+    ctx.addIssue({ code: "custom", path: ["actionType"], message: "Informe o assunto ou tipo de ação." });
   }
   if (input.createContract) {
     if (input.contractServiceDescription.length < 5) {
